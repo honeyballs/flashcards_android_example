@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">THM Flashcards</string>
+
+    <!-- Button texts -->
+    <string name="Ok">Ok</string>
+    <string name="cancel">Cancel</string>
+
+    <!-- Main Activity Strings -->
+    <string name="category_dialog_title">Add a category</string>
+    <string name="category_dialog_hint">Category name</string>
+</resources>

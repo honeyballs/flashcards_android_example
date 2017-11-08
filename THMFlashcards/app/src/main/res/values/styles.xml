@@ -1,0 +1,17 @@
+<resources>
+
+    <!-- Base application theme. -->
+    <!-- Use the AppCompat Theme to get a material design theme which is supported below android 5.0 -->
+    <!-- NoActionBar - we will design our own -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorSecondary</item>
+    </style>
+
+    <style name="ToolbarCustomTheme" parent="AppTheme">
+        <item name="android:textColorPrimary">@color/textColorSecondary</item>
+    </style>
+
+</resources>

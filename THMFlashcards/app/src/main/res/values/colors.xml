@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Visit https://material.io/color/ to get the darker and lighter version of a color -->
+<resources>
+
+    <color name="colorPrimary">#6d4c41</color>
+    <color name="colorPrimaryDark">#40241a</color>
+    <color name="colorPrimaryLight">#9c786c</color>
+
+    <color name="colorSecondary">#64dd17</color>
+    <color name="colorSecondaryDark">#1faa00</color>
+    <color name="colorSecondaryLight">#9cff57</color>
+
+    <color name="textColorSecondary">#fff</color>
+    <color name="textColorPrimary">#444</color>
+</resources>

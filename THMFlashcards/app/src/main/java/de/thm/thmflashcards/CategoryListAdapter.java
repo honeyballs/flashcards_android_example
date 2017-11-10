@@ -11,40 +11,47 @@ import android.widget.TextView;
 import java.util.HashMap;
 import java.util.List;
 
+import de.thm.thmflashcards.persistance.Category;
+import de.thm.thmflashcards.persistance.SubCategory;
+
 /**
- * Created by Farea on 07.11.2017.
+ * Created by Yannick Bals on 07.11.2017.
  */
 
 public class CategoryListAdapter extends BaseExpandableListAdapter {
 
     private Context context;
-    private List<String> categoryHeaders;
-    private HashMap<String, List<String>> categoryChildren;
+    private List<Category> categories;
+    private HashMap<Integer, List<SubCategory>> subCategories;
 
-    public CategoryListAdapter(Context c, List<String> categories, HashMap<String, List<String>> children) {
+    public CategoryListAdapter(Context c, List<Category> categories, HashMap<Integer, List<SubCategory>> children) {
         this.context = c;
-        this.categoryHeaders = categories;
-        this.categoryChildren = children;
+        this.categories = categories;
+        this.subCategories = children;
     }
 
     @Override
     public int getGroupCount() {
-        return categoryHeaders.size();
+        return categories.size();
     }
 
     @Override
     public int getChildrenCount(int groupPosition) {
-        return categoryChildren.get(categoryHeaders.get(groupPosition)).size();
+        if (subCategories.containsKey(categories.get(groupPosition).getId())) {
+            return subCategories.get(categories.get(groupPosition).getId()).size();
+        } else {
+            return 0;
+        }
     }
 
     @Override
-    public Object getGroup(int groupPosition) {
-        return categoryHeaders.get(groupPosition);
+    public Category getGroup(int groupPosition) {
+        return categories.get(groupPosition);
     }
 
     @Override
-    public Object getChild(int groupPosition, int childPosition) {
-        return categoryChildren.get(categoryHeaders.get(groupPosition)).get(childPosition);
+    public SubCategory getChild(int groupPosition, int childPosition) {
+        return subCategories.get(categories.get(groupPosition).getId()).get(childPosition);
     }
 
     @Override
@@ -64,7 +71,7 @@ public class CategoryListAdapter extends BaseExpandableListAdapter {
 
     @Override
     public View getGroupView(int groupPosition, boolean isExpanded, View view, ViewGroup viewGroup) {
-        String category = (String) getGroup(groupPosition);
+        String category = getGroup(groupPosition).getName();
         if (view == null) {
             LayoutInflater layoutInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             view = layoutInflater.inflate(R.layout.category_header, null);
@@ -77,7 +84,7 @@ public class CategoryListAdapter extends BaseExpandableListAdapter {
 
     @Override
     public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View view, ViewGroup viewGroup) {
-        String categoryItem = (String) getChild(groupPosition, childPosition);
+        String categoryItem = getChild(groupPosition, childPosition).getName();
         if (view == null) {
             LayoutInflater layoutInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             view = layoutInflater.inflate(R.layout.category_item, null);
@@ -90,5 +97,33 @@ public class CategoryListAdapter extends BaseExpandableListAdapter {
     @Override
     public boolean isChildSelectable(int groupPosition, int childPosition) {
         return true;
+    }
+
+    //Define Methods to add/remove items to and from the lists in this adapter to get instant updates
+    public void updateData(List<Category> categories, HashMap<Integer, List<SubCategory>> subCategories) {
+        this.categories = categories;
+        this.subCategories = subCategories;
+        notifyDataSetChanged();
+    }
+
+    public void addCategory(Category category) {
+        categories.add(category);
+        notifyDataSetChanged();
+    }
+
+    public void addSubCategories(int id, List<SubCategory> subCategoryList) {
+        subCategories.put(id, subCategoryList);
+        notifyDataSetChanged();
+    }
+
+    public void clearCategories() {
+        subCategories.clear();
+        categories.clear();
+        notifyDataSetChanged();
+    }
+
+    public void clearSubCategories() {
+        subCategories.clear();
+        notifyDataSetChanged();
     }
 }

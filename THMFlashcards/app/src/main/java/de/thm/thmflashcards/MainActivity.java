@@ -36,4 +36,3 @@ public class MainActivity extends AppCompatActivity {
     }
 
 }
-//TODO: detail activity, die das detail fragment beinhaltet. Für landscape support: finish() in der onCreate

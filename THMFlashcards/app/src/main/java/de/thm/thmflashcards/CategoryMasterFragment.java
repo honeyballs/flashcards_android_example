@@ -2,12 +2,14 @@ package de.thm.thmflashcards;
 
 import android.app.Fragment;
 import android.content.DialogInterface;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.AppCompatEditText;
 import android.util.Log;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,42 +21,32 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+
+import de.thm.thmflashcards.persistance.Category;
+import de.thm.thmflashcards.persistance.AppDatabase;
+import de.thm.thmflashcards.persistance.SubCategory;
+
 /**
- * Created by Farea on 09.11.2017.
+ * Created by Yannick Bals on 09.11.2017.
  */
 
 public class CategoryMasterFragment extends Fragment {
 
     private boolean isDualView;
 
-    private List<String> categories;
-    private HashMap<String, List<String>> categorieItems;
+    private List<Category> categories;
+    private HashMap<Integer, List<SubCategory>> categorieItems;
+
+    private CategoryListAdapter adapter;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        //Items for testing
-        categories = new ArrayList<>();
-        categories.add("QM");
-        categories.add("SAG");
-        categories.add("Empty");
 
+        categories = new ArrayList<>();
         categorieItems = new HashMap<>();
 
-        List<String> QMItems = new ArrayList<>();
-        QMItems.add("Häufigkeiten");
-        QMItems.add("Varianz");
-        QMItems.add("Korrelation");
-
-        List<String> SAGItems = new ArrayList<>();
-        SAGItems.add("State Pattern");
-
-        List<String> emptyTest = new ArrayList<>();
-
-        categorieItems.put(categories.get(0), QMItems);
-        categorieItems.put(categories.get(1), SAGItems);
-        categorieItems.put(categories.get(2), emptyTest);
     }
 
     @Nullable
@@ -70,7 +62,7 @@ public class CategoryMasterFragment extends Fragment {
 
         //Set up the expandable List View
         ExpandableListView categoryView = view.findViewById(R.id.categoryView);
-        CategoryListAdapter adapter = new CategoryListAdapter(getActivity(), categories, categorieItems);
+        adapter = new CategoryListAdapter(getActivity(), categories, categorieItems);
         categoryView.setAdapter(adapter);
         categoryView.setLongClickable(true);
         categoryView.setOnChildClickListener(new CategoryChildOnClickListener());
@@ -87,6 +79,35 @@ public class CategoryMasterFragment extends Fragment {
         View detailsFrame = getActivity().findViewById(R.id.detailContainer);
         isDualView = detailsFrame != null && detailsFrame.getVisibility() == View.VISIBLE;
 
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        loadCategories();
+
+    }
+
+    /**
+     * Loads categories from the internal database
+     */
+    private void loadCategories() {
+        new LoadCategoriesTask().execute();
+    }
+
+    /**
+     * Loads subcategories from the internal database
+     */
+    private void loadSubCategories() {
+        new LoadSubCategoriesTask().execute(categories);
+    }
+
+    /**
+     * Give the updated Lists to the adapter and let him update the list
+     */
+    private void updateList() {
+        adapter.updateData(categories, categorieItems);
     }
 
     /**
@@ -113,8 +134,10 @@ public class CategoryMasterFragment extends Fragment {
             builder.setPositiveButton(getResources().getString(R.string.Ok), new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialogInterface, int i) {
-                    String category = categoryEditText.getText().toString();
-                    Toast.makeText(getActivity(), category, Toast.LENGTH_SHORT).show();
+                    String categoryName = categoryEditText.getText().toString();
+                    Category category = new Category();
+                    category.setName(categoryName);
+                    new InsertCategoryTask().execute(category);
                 }
             });
 
@@ -138,7 +161,6 @@ public class CategoryMasterFragment extends Fragment {
 
         @Override
         public boolean onChildClick(ExpandableListView expandableListView, View view, int groupPosition, int childPosition, long id) {
-            Toast.makeText(getActivity(), categorieItems.get(categories.get(groupPosition)).get(childPosition), Toast.LENGTH_SHORT).show();
             return false;
         }
     }
@@ -162,6 +184,79 @@ public class CategoryMasterFragment extends Fragment {
                 return false;
             }
 
+        }
+    }
+
+    /**
+     * AsyncTask to load the category data
+     */
+    class LoadCategoriesTask extends AsyncTask<Void, Void, List<Category>> {
+        @Override
+        protected List<Category> doInBackground(Void... voids) {
+            AppDatabase db = AppDatabase.getAppDataBase(getActivity());
+            List<Category> categories = new ArrayList<>();
+            Category[] categoriesArray = db.categoryDao().loadAllCategories();
+            if (categoriesArray != null && categoriesArray.length > 0) {
+                for (Category category: categoriesArray) {
+                    categories.add(category);
+                }
+            }
+            return categories;
+        }
+
+        @Override
+        protected void onPostExecute(List<Category> categories) {
+            CategoryMasterFragment.this.categories = categories;
+            loadSubCategories();
+        }
+    }
+
+    /**
+     * AsyncTask to load the category data
+     */
+    class LoadSubCategoriesTask extends AsyncTask<List<Category>, Void, HashMap<Integer, List<SubCategory>>> {
+
+        @Override
+        protected HashMap<Integer, List<SubCategory>> doInBackground(List<Category>[] lists) {
+            AppDatabase db = AppDatabase.getAppDataBase(getActivity());
+            List<Category> categories = lists[0];
+            HashMap<Integer, List<SubCategory>> subCategories = new HashMap<>();
+            for (Category category : categories) {
+                List<SubCategory> subCategoryList = new ArrayList<>();
+                SubCategory[] subArray = db.subCategoryDao().loadSubCategoriesOfCategory(category.getId());
+                if (subArray != null && subArray.length > 0) {
+                    for (SubCategory subCategory : subArray) {
+                        subCategoryList.add(subCategory);
+                    }
+                    subCategories.put(category.getId(), subCategoryList);
+                }
+            }
+
+            return subCategories;
+        }
+
+        @Override
+        protected void onPostExecute(HashMap<Integer, List<SubCategory>> integerListHashMap) {
+            categorieItems = integerListHashMap;
+            updateList();
+        }
+    }
+
+    /**
+     * AsyncTask to insert a new category
+     */
+    class InsertCategoryTask extends AsyncTask<Category, Void, Long> {
+        @Override
+        protected Long doInBackground(Category... categories) {
+            AppDatabase db = AppDatabase.getAppDataBase(getActivity());
+            return db.categoryDao().insertCategory(categories[0]);
+        }
+
+        @Override
+        protected void onPostExecute(Long aLong) {
+            if (aLong != null) {
+                loadCategories();
+            }
         }
     }
 }

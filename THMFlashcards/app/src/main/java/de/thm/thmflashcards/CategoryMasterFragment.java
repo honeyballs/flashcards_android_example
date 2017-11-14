@@ -1,7 +1,9 @@
 package de.thm.thmflashcards;
 
+import android.app.ExpandableListActivity;
 import android.app.Fragment;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -37,6 +39,7 @@ public class CategoryMasterFragment extends Fragment {
     private List<Category> categories;
     private HashMap<Integer, List<SubCategory>> categorieItems;
 
+    private ExpandableListView categoryView;
     private CategoryListAdapter adapter;
 
     @Override
@@ -61,7 +64,7 @@ public class CategoryMasterFragment extends Fragment {
         fab.setOnClickListener(new FABListener());
 
         //Set up the expandable List View
-        ExpandableListView categoryView = view.findViewById(R.id.categoryView);
+        categoryView = view.findViewById(R.id.categoryView);
         adapter = new CategoryListAdapter(getActivity(), categories, categorieItems);
         categoryView.setAdapter(adapter);
         categoryView.setLongClickable(true);
@@ -161,6 +164,57 @@ public class CategoryMasterFragment extends Fragment {
 
         @Override
         public boolean onChildClick(ExpandableListView expandableListView, View view, int groupPosition, int childPosition, long id) {
+
+            final SubCategory subCategory = (SubCategory) expandableListView.getExpandableListAdapter().getChild(groupPosition, childPosition);
+            final Category category = (Category) expandableListView.getExpandableListAdapter().getGroup(groupPosition);
+
+            //If this is the add item we display the dialog to add data
+            if (subCategory.getName().equals("Add")) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                builder.setTitle(getResources().getString(R.string.subcategory_dialog_title));
+                View dialogContent = LayoutInflater.from(getActivity()).inflate(R.layout.text_input_dialog, null);
+                final AppCompatEditText categoryEditText = dialogContent.findViewById(R.id.dialogInput);
+                categoryEditText.setHint(getResources().getString(R.string.subcategory_dialog_hint));
+                builder.setView(dialogContent);
+
+                //Set up the buttons
+                builder.setPositiveButton(getResources().getString(R.string.Ok), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        String subCategoryName = categoryEditText.getText().toString();
+
+                        //Check if someone typed "Add" since this is used to identify the item to add subcategories
+                        if (subCategoryName.equals("Add")) {
+                            Toast.makeText(getActivity(), getResources().getString(R.string.add_typed), Toast.LENGTH_SHORT).show();
+                        } else {
+                            SubCategory newSubCategory = new SubCategory();
+                            newSubCategory.setName(subCategoryName);
+                            //Fulfill the foreign key constraint
+                            newSubCategory.setCategoryId(category.getId());
+                            new InsertSubCategoryTask().execute(newSubCategory);
+                        }
+
+                    }
+                });
+
+                builder.setNegativeButton(getResources().getString(R.string.cancel), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        dialogInterface.cancel();
+                    }
+                });
+
+                //Show the dialog
+                builder.show();
+            } else {
+                //Load data for the detail view.
+                //If the layout is not Master Detail we start the new Activity
+                if (!isDualView) {
+                    Intent intent = new Intent(getActivity(), DetailActivity.class);
+                    startActivity(intent);
+                }
+            }
+
             return false;
         }
     }
@@ -172,13 +226,51 @@ public class CategoryMasterFragment extends Fragment {
 
         @Override
         public boolean onItemLongClick(AdapterView<?> adapterView, View view, int position, long id) {
+            //Used to check whether we are clicking on a subcategory or a category
             int itemType = ExpandableListView.getPackedPositionType(id);
+            //The id we receive here is a packed value which consists of both positions (group and child), so we have to unpack it
+            int groupPosition = ExpandableListView.getPackedPositionGroup(id);
+            int childPosition = ExpandableListView.getPackedPositionChild(id);
 
             if (itemType == ExpandableListView.PACKED_POSITION_TYPE_GROUP) {
-                Log.e("Long click", "GROUP");
+                final Category category = (Category) categoryView.getExpandableListAdapter().getGroup(groupPosition);
+                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                builder.setTitle(getResources().getString(R.string.delete_category_title));
+                builder.setMessage(getResources().getString(R.string.delete_category));
+                builder.setPositiveButton(getResources().getString(R.string.Ok), new DialogInterface.OnClickListener() {
+
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        new DeleteCategoryTask().execute(category);
+                    }
+                });
+                builder.setNegativeButton(getResources().getString(R.string.cancel), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        dialogInterface.dismiss();
+                    }
+                });
+                builder.show();
                 return true;
             } else if (itemType == ExpandableListView.PACKED_POSITION_TYPE_CHILD){
-                Log.e("Long click", "CHILD");
+                final SubCategory subCategory = (SubCategory) categoryView.getExpandableListAdapter().getChild(groupPosition, childPosition);
+                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                builder.setTitle(getResources().getString(R.string.delete_subcategory_title));
+                builder.setMessage(getResources().getString(R.string.delete_subcategory));
+                builder.setPositiveButton(getResources().getString(R.string.Ok), new DialogInterface.OnClickListener() {
+
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        new DeleteSubCategoryTask().execute(subCategory);
+                    }
+                });
+                builder.setNegativeButton(getResources().getString(R.string.cancel), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        dialogInterface.dismiss();
+                    }
+                });
+                builder.show();
                 return true;
             } else {
                 return false;
@@ -228,8 +320,8 @@ public class CategoryMasterFragment extends Fragment {
                     for (SubCategory subCategory : subArray) {
                         subCategoryList.add(subCategory);
                     }
-                    subCategories.put(category.getId(), subCategoryList);
                 }
+                subCategories.put(category.getId(), subCategoryList);
             }
 
             return subCategories;
@@ -237,6 +329,14 @@ public class CategoryMasterFragment extends Fragment {
 
         @Override
         protected void onPostExecute(HashMap<Integer, List<SubCategory>> integerListHashMap) {
+
+            //Add an item that is used to add new subcategories to each category
+            for (Integer id : integerListHashMap.keySet()) {
+                SubCategory addSub = new SubCategory();
+                addSub.setName("Add");
+                integerListHashMap.get(id).add(addSub);
+            }
+
             categorieItems = integerListHashMap;
             updateList();
         }
@@ -257,6 +357,51 @@ public class CategoryMasterFragment extends Fragment {
             if (aLong != null) {
                 loadCategories();
             }
+        }
+    }
+
+    class InsertSubCategoryTask extends AsyncTask<SubCategory, Void, Long> {
+        @Override
+        protected Long doInBackground(SubCategory... subCategories) {
+            AppDatabase db = AppDatabase.getAppDataBase(getActivity());
+            return db.subCategoryDao().insertSubCategory(subCategories[0]);
+        }
+
+        @Override
+        protected void onPostExecute(Long aLong) {
+            if (aLong != null) {
+                loadSubCategories();
+            }
+        }
+    }
+
+    class DeleteCategoryTask extends AsyncTask<Category, Void, Integer> {
+
+        @Override
+        protected Integer doInBackground(Category... categories) {
+            AppDatabase db = AppDatabase.getAppDataBase(getActivity());
+            return db.categoryDao().deleteCategory(categories[0]);
+        }
+
+        @Override
+        protected void onPostExecute(Integer integer) {
+            Log.e("Rows deleted: ", "" + integer);
+            loadCategories();
+        }
+    }
+
+    class DeleteSubCategoryTask extends AsyncTask<SubCategory, Void, Integer> {
+
+        @Override
+        protected Integer doInBackground(SubCategory... subCategories) {
+            AppDatabase db = AppDatabase.getAppDataBase(getActivity());
+            return db.subCategoryDao().deleteSubCategoty(subCategories[0]);
+        }
+
+        @Override
+        protected void onPostExecute(Integer integer) {
+            Log.e("Rows deleted: ", "" + integer);
+            loadSubCategories();
         }
     }
 }

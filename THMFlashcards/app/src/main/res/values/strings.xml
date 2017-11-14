@@ -7,5 +7,13 @@
 
     <!-- Main Activity Strings -->
     <string name="category_dialog_title">Add a category</string>
+    <string name="subcategory_dialog_title">Add a subcategory</string>
+    <string name="add_subcategory">Tap to add a subcategory</string>
     <string name="category_dialog_hint">Category name</string>
+    <string name="subcategory_dialog_hint">Subcategory name</string>
+    <string name="add_typed">"Add" is not a valid entry. Please choose something else.</string>
+    <string name="delete_category_title">Delete category</string>
+    <string name="delete_subcategory_title">Delete subcategory</string>
+    <string name="delete_category">Are you sure you want to delete this category?</string>
+    <string name="delete_subcategory">Are you sure you want to delete this subcategory?</string>
 </resources>

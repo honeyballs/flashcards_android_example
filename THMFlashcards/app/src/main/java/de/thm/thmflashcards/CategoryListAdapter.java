@@ -1,6 +1,7 @@
 package de.thm.thmflashcards;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Typeface;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -84,13 +85,26 @@ public class CategoryListAdapter extends BaseExpandableListAdapter {
 
     @Override
     public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View view, ViewGroup viewGroup) {
+
         String categoryItem = getChild(groupPosition, childPosition).getName();
-        if (view == null) {
-            LayoutInflater layoutInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            view = layoutInflater.inflate(R.layout.category_item, null);
+
+        //Decide whether the item is a "real" item or the item to add new subcategories and inflate the appropriate view
+        if (categoryItem.equals("Add")) {
+            if (view == null || view.getTag().equals("ItemView")) {
+                LayoutInflater layoutInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                view = layoutInflater.inflate(R.layout.add_subcategory_item, null);
+                view.setTag("AddView");
+            }
+        } else {
+            if (view == null || view.getTag().equals("AddView")) {
+                LayoutInflater layoutInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                view = layoutInflater.inflate(R.layout.category_item, null);
+                view.setTag("ItemView");
+            }
+            TextView itemView = view.findViewById(R.id.categoryItemTextView);
+            itemView.setText(categoryItem);
         }
-        TextView itemView = view.findViewById(R.id.categoryItemTextView);
-        itemView.setText(categoryItem);
+
         return view;
     }
 

@@ -16,4 +16,8 @@
     <string name="delete_subcategory_title">Delete subcategory</string>
     <string name="delete_category">Are you sure you want to delete this category?</string>
     <string name="delete_subcategory">Are you sure you want to delete this subcategory?</string>
+
+    <!--Key Strings-->
+    <string name="subCategoryKey">subCategory</string>
+
 </resources>

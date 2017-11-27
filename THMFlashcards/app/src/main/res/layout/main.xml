@@ -5,11 +5,10 @@
 
     <include layout="@layout/toolbar" />
 
-    <fragment
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/masterFragment"
-        android:name="de.thm.thmflashcards.CategoryMasterFragment"
+        android:id="@+id/masterContainer"
         />
 
 </LinearLayout>

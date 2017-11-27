@@ -1,13 +1,15 @@
 package de.thm.thmflashcards;
 
 import android.app.ExpandableListActivity;
-import android.app.Fragment;
+
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.AppCompatEditText;
 import android.util.Log;
@@ -34,7 +36,7 @@ import de.thm.thmflashcards.persistance.SubCategory;
 
 public class CategoryMasterFragment extends Fragment {
 
-    private boolean isDualView;
+    private Communicator communicator;
 
     private List<Category> categories;
     private HashMap<Integer, List<SubCategory>> categorieItems;
@@ -43,9 +45,19 @@ public class CategoryMasterFragment extends Fragment {
     private CategoryListAdapter adapter;
 
     @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        //Cast the context (parent activity) to the communicator interface
+        try {
+            communicator = (Communicator) context;
+        } catch (ClassCastException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
 
         categories = new ArrayList<>();
         categorieItems = new HashMap<>();
@@ -74,19 +86,13 @@ public class CategoryMasterFragment extends Fragment {
         return view;
     }
 
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-
-        //Check if the Activity layout contains the detail view. If it does, we need to handle clicks differently.
-        View detailsFrame = getActivity().findViewById(R.id.detailContainer);
-        isDualView = detailsFrame != null && detailsFrame.getVisibility() == View.VISIBLE;
-
-    }
 
     @Override
     public void onResume() {
         super.onResume();
+
+        categories.clear();
+        categorieItems.clear();
 
         loadCategories();
 
@@ -209,10 +215,7 @@ public class CategoryMasterFragment extends Fragment {
             } else {
                 //Load data for the detail view.
                 //If the layout is not Master Detail we start the new Activity
-                if (!isDualView) {
-                    Intent intent = new Intent(getActivity(), DetailActivity.class);
-                    startActivity(intent);
-                }
+                communicator.loadDetailFor(subCategory.getId());
             }
 
             return false;

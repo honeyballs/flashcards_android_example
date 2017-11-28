@@ -12,6 +12,8 @@
 
     <style name="ToolbarCustomTheme" parent="AppTheme">
         <item name="android:textColorPrimary">@color/textColorSecondary</item>
+        <!-- This sets the color of the Back Arrow -->
+        <item name="colorControlNormal">@color/textColorSecondary</item>
     </style>
 
 </resources>

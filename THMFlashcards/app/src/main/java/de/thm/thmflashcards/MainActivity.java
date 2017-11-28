@@ -6,6 +6,8 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.FrameLayout;
 
@@ -33,7 +35,24 @@ public class MainActivity extends AppCompatActivity implements Communicator{
         FrameLayout detailContainer = findViewById(R.id.detailContainer);
         isDualView = detailContainer != null && detailContainer.getVisibility() == View.VISIBLE;
 
+    }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        switch (item.getItemId()) {
+            case R.id.about_item:
+                //Do shit
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
 
     }
 

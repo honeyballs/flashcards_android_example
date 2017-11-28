@@ -4,10 +4,12 @@
     android:layout_height="match_parent"
     android:background="#d3d3d3">
 
-    <TextView
+    <android.support.v7.widget.RecyclerView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Hi"
-        android:textSize="25sp"/>
+        android:layout_height="match_parent"
+        android:id="@+id/detailRecycler"
+        android:scrollbars="vertical">
+
+    </android.support.v7.widget.RecyclerView>
 
 </LinearLayout>

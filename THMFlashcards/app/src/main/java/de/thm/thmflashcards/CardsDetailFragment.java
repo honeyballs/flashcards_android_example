@@ -30,9 +30,9 @@ public class CardsDetailFragment extends Fragment {
         cards = new ArrayList<>();
 
         //Add Test data
-        Flashcard card1 = new Flashcard("Frage 1?", "Antwort 1", 13, 20);
-        Flashcard card2 = new Flashcard("Frage 2", "Antwort 2", 5, 1);
-        Flashcard card3 = new Flashcard("Dies ist eine sehr lange Frage wie man sie normalerweise auch auf Karteikarten findet, oder nicht?", "Die Antwort auf diese Frage ist genau so lang. Hiermit will ich nur testen, wie die Darstellung langer Texte funktioniert", 15, 12);
+        Flashcard card1 = new Flashcard("Frage 1?", "Antwort 1", null);
+        Flashcard card2 = new Flashcard("Frage 2", "Antwort 2", null);
+        Flashcard card3 = new Flashcard("Dies ist eine sehr lange Frage wie man sie normalerweise auch auf Karteikarten findet, oder nicht?", "Die Antwort auf diese Frage ist genau so lang. Hiermit will ich nur testen, wie die Darstellung langer Texte funktioniert", null);
 
         card3.setCurrentType(Flashcard.ANSWER_TYPE);
 

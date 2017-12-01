@@ -213,8 +213,7 @@ public class CategoryMasterFragment extends Fragment {
                 //Show the dialog
                 builder.show();
             } else {
-                //Load data for the detail view.
-                //If the layout is not Master Detail we start the new Activity
+                //Let the activity start/show the cards
                 communicator.loadDetailFor(subCategory.getId());
             }
 

@@ -21,6 +21,7 @@
         android:src="@drawable/ic_add_white_24dp"
         app:layout_anchor="@id/categoryView"
         app:layout_anchorGravity="bottom|right|end"
+        app:layout_behavior="de.thm.thmflashcards.FABBehavior"
         />
 
 </android.support.design.widget.CoordinatorLayout>

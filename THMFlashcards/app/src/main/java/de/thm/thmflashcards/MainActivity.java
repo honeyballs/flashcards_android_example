@@ -60,11 +60,14 @@ public class MainActivity extends AppCompatActivity implements Communicator{
     public void loadDetailFor(int subCategoryId) {
         if (isDualView) {
             CardsDetailFragment detailFragment = new CardsDetailFragment();
+            Bundle idBundle = new Bundle();
+            idBundle.putInt(getResources().getString(R.string.subCategoryKey), subCategoryId);
+            detailFragment.setArguments(idBundle);
             //Optional: Pass Intent to the Fragment
             getSupportFragmentManager().beginTransaction().replace(R.id.detailContainer, detailFragment, "DETAIL").commit();
         } else {
             Intent intent = new Intent(this, DetailActivity.class);
-            intent.putExtra(getResources().getString(R.string.subCategoryKey), 0);
+            intent.putExtra(getResources().getString(R.string.subCategoryKey), subCategoryId);
             startActivity(intent);
         }
     }

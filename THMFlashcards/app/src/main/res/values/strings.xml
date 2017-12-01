@@ -25,6 +25,18 @@
     <string name="delete_card_title">Delete card</string>
     <string name="delete_card">Are you sure you want to delete this card?</string>
 
+    <!-- Add Cards Strings -->
+    <string name="enter_question">Question</string>
+    <string name="question_hint">Your question</string>
+    <string name="enter_answer">Answer</string>
+    <string name="answer_hint">Your Answer</string>
+    <string name="confirm_creation">Confirm</string>
+    <string name="error_subcategory">Error: Couldn\'t find the right subcategory the card belongs to. Please restart the app.</string>
+    <string name="error_empty_question">Please enter a question.</string>
+    <string name="error_empty_answer">Please enter an answer.</string>
+    <string name="error_insert">An Error occured. Please try to restart the app.</string>
+    <string name="success_insert">The flashcard has been added.</string>
+
     <!-- Card View Texts -->
     <string name="know">I KNOW</string>
     <string name="dont_know">I DON\'T KNOW</string>
@@ -35,5 +47,9 @@
 
     <!--Key Strings-->
     <string name="subCategoryKey">subCategory</string>
+
+    <!-- Labels -->
+    <string name="detail_activity_label">Flashcards</string>
+    <string name="add_card_activity_label">Add card</string>
 
 </resources>

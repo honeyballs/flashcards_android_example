@@ -5,13 +5,13 @@
     <item
         android:id="@+id/confirm_item"
         android:title="@string/confirm_creation"
-        android:icon="@drawable/ic_add_white_24dp"
+        android:icon="@drawable/ic_done_white_24dp"
         app:showAsAction="always"/>
 
     <item
         android:id="@+id/about_item"
         android:title="@string/menu_about"
         android:icon="@drawable/ic_info_white_24dp"
-        app:showAsAction="ifRoom"/>
+        app:showAsAction="never"/>
 
 </menu>

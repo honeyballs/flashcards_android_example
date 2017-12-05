@@ -24,6 +24,8 @@
     <string name="choose_category">Please choose a category on the left.</string>
     <string name="delete_card_title">Delete card</string>
     <string name="delete_card">Are you sure you want to delete this card?</string>
+    <string name="update_card_error">Couldn\'t persist the updated card to the database. Please restart the app.</string>
+    <string name="delete_cards_error">Couldn\'t delete the selected cards. Please restart the app.</string>
 
     <!-- Add Cards Strings -->
     <string name="enter_question">Question</string>
@@ -36,6 +38,12 @@
     <string name="error_empty_answer">Please enter an answer.</string>
     <string name="error_insert">An Error occured. Please try to restart the app.</string>
     <string name="success_insert">The flashcard has been added.</string>
+    <string name="camera_or_gallery">Pick the source</string>
+    <string name="camera_permission_granted">You can now take a picture for your cards.</string>
+    <string name="camera_permission_denied">You cannot take pictures for your cards until the camera permission is granted.</string>
+    <string name="gallery_permission_granted">You can now pick pictures from your gallery.</string>
+    <string name="gallery_permission_denied">You cannot pick pictures from your gallery until the storage permission is granted.</string>
+    <string name="image_added">Image added succesfully.</string>
 
     <!-- Card View Texts -->
     <string name="know">I KNOW</string>

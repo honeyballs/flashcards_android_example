@@ -2,6 +2,12 @@
 
     package="de.thm.thmflashcards">
 
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" />
+    <uses-feature android:name="android.hardware.camera.autofocus" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -25,7 +31,17 @@
         <activity
             android:name=".AddCardActivity"
             android:label="@string/add_card_activity_label"
-            android:noHistory="true" />
+            />
+
+        <provider
+            android:name="android.support.v4.content.FileProvider"
+            android:authorities="de.thm.thmflashcards.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths"></meta-data>
+        </provider>
 
     </application>
 

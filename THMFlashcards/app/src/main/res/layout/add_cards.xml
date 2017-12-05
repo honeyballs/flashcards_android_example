@@ -77,7 +77,7 @@
         android:id="@+id/addImageButton"
         android:layout_gravity="center_vertical|end"
         android:layout_margin="16dp"
-        android:src="@drawable/ic_add_white_24dp"
+        android:src="@drawable/ic_add_a_photo_white_24dp"
         app:layout_anchor="@id/seperator"
         app:layout_anchorGravity="right|end"
         />

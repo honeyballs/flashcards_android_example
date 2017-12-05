@@ -1,8 +1,9 @@
 package de.thm.thmflashcards;
 
-import android.arch.persistence.room.Delete;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -11,10 +12,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 
+import de.thm.thmflashcards.persistance.AppDatabase;
 import de.thm.thmflashcards.persistance.Flashcard;
 
 /**
@@ -71,7 +73,10 @@ public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             avh.answer.setText(item.getAnswer());
             //Only show the image if needed
             if (item.getAnswerImagePath() != null && !item.getAnswerImagePath().equals("")) {
-                //load image and set visibility
+                //TODO: Scale the image down and turn it
+                Uri path = Uri.parse(item.getAnswerImagePath());
+                avh.answerImage.setImageURI(path);
+                avh.answerImage.setVisibility(View.VISIBLE);
             }
             //Calculate the success rate
             double rate = (double) item.getNoCorrect() / ((double) item.getNoCorrect() + (double) item.getNoWrong());
@@ -156,13 +161,11 @@ public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             }else {
                 card.setNoWrong(card.getNoWrong()+1);
             }
-
-            //TODO: Persist counter in background
-
+            //Update the card in the db
+            new UpdateCounter().execute(card);
             //Turn the card around
             card.setCurrentType(Flashcard.ANSWER_TYPE);
             notifyDataSetChanged();
-
         }
 
         public void setPosition(int position) {
@@ -201,7 +204,7 @@ public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             builder.setPositiveButton(R.string.Ok, new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialogInterface, int i) {
-                    //TODO: Delete item from database
+                    new DeleteCard().execute(cards.get(position));
                     cards.remove(position);
                     notifyDataSetChanged();
                 }
@@ -218,6 +221,38 @@ public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
         public void setPosition(int position) {
             this.position = position;
+        }
+    }
+
+    private class UpdateCounter extends AsyncTask<Flashcard, Void, Integer> {
+
+        @Override
+        protected Integer doInBackground(Flashcard... flashcards) {
+            AppDatabase db = AppDatabase.getAppDataBase(context);
+            return db.flashcardDao().updateFlashcard(flashcards[0]);
+        }
+
+        @Override
+        protected void onPostExecute(Integer integer) {
+            if (integer == 0) {
+                Toast.makeText(context, context.getResources().getString(R.string.update_card_error), Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    private class DeleteCard extends AsyncTask<Flashcard, Void, Integer> {
+
+        @Override
+        protected Integer doInBackground(Flashcard... flashcards) {
+            AppDatabase db = AppDatabase.getAppDataBase(context);
+            return db.flashcardDao().deleteFlashcard(flashcards[0]);
+        }
+
+        @Override
+        protected void onPostExecute(Integer integer) {
+            if (integer == 0) {
+                Toast.makeText(context, context.getResources().getString(R.string.delete_cards_error), Toast.LENGTH_SHORT).show();
+            }
         }
     }
 

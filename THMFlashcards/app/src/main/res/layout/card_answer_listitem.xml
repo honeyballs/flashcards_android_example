@@ -41,6 +41,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="15dp"
                 android:id="@+id/answerImage"
+                android:scaleType="fitCenter"
+                android:adjustViewBounds="true"
                 android:visibility="gone"/>
 
             <LinearLayout

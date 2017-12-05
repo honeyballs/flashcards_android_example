@@ -8,12 +8,25 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorSecondary</item>
+        <item name="android:textAppearanceSmallPopupMenu">@style/myPopupMenuTextAppearanceSmall</item>
+        <item name="android:textAppearanceLargePopupMenu">@style/myPopupMenuTextAppearanceLarge</item>
     </style>
 
     <style name="ToolbarCustomTheme" parent="AppTheme">
         <item name="android:textColorPrimary">@color/textColorSecondary</item>
         <!-- This sets the color of the Back Arrow -->
         <item name="colorControlNormal">@color/textColorSecondary</item>
+    </style>
+
+    <!--Add styles for the popup menu so that its text color is black and it has the right fontsize-->
+    <style name="myPopupMenuTextAppearanceSmall" parent="@android:style/TextAppearance.DeviceDefault.Widget.PopupMenu.Small">
+        <item name="android:textColor">@color/textColorPrimary</item>
+        <item name="android:textSize">12sp</item>
+    </style>
+
+    <style name="myPopupMenuTextAppearanceLarge" parent="@android:style/TextAppearance.DeviceDefault.Widget.PopupMenu.Large">
+        <item name="android:textColor">@color/textColorPrimary</item>
+        <item name="android:textSize">20sp</item>
     </style>
 
 </resources>

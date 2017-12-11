@@ -2,20 +2,26 @@ package de.thm.thmflashcards;
 
 import android.content.Context;
 import android.content.DialogInterface;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.provider.MediaStore;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
 
+import de.hdodenhof.circleimageview.CircleImageView;
 import de.thm.thmflashcards.persistance.AppDatabase;
 import de.thm.thmflashcards.persistance.Flashcard;
 
@@ -73,10 +79,8 @@ public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             avh.answer.setText(item.getAnswer());
             //Only show the image if needed
             if (item.getAnswerImagePath() != null && !item.getAnswerImagePath().equals("")) {
-                //TODO: Scale the image down and turn it
-                Uri path = Uri.parse(item.getAnswerImagePath());
-                avh.answerImage.setImageURI(path);
                 avh.answerImage.setVisibility(View.VISIBLE);
+                avh.answerImage.setImageBitmap(getThumbNail(item.getAnswerImagePath()));
             }
             //Calculate the success rate
             double rate = (double) item.getNoCorrect() / ((double) item.getNoCorrect() + (double) item.getNoWrong());
@@ -123,7 +127,7 @@ public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
         public TextView question;
         public TextView answer;
-        public ImageView answerImage;
+        public CircleImageView answerImage;
         public TextView successRate;
         public TextView turn;
         public TurnAroundListener turnAroundListener;
@@ -133,7 +137,7 @@ public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             super(itemView);
             question = itemView.findViewById(R.id.questionTextView);
             answer = itemView.findViewById(R.id.answerTextView);
-            answerImage = itemView.findViewById(R.id.answerImage);
+            answerImage = itemView.findViewById(R.id.answerImageView);
             successRate = itemView.findViewById(R.id.successRateView);
             turn = itemView.findViewById(R.id.turnTextView);
             turnAroundListener = listener;
@@ -141,6 +145,13 @@ public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             deleteCardListener = deleteListener;
             itemView.setOnLongClickListener(deleteCardListener);
         }
+    }
+
+    /**
+     * Get a thumbnail of an image from a provided Uri.
+     */
+    private Bitmap getThumbNail(String path) {
+        return ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(path), 64, 64);
     }
 
     /**

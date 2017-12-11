@@ -41,6 +41,8 @@ dependencies {
     //Use Room for persistance
     implementation "android.arch.persistence.room:runtime:1.0.0"
     annotationProcessor "android.arch.persistence.room:compiler:1.0.0"
+    //This library is used to display round images
+    compile 'de.hdodenhof:circleimageview:2.2.0'
 
     compile fileTree(dir: 'libs', include: ['*.jar'])
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {

@@ -28,22 +28,30 @@
                 android:id="@+id/questionTextView"
                 android:textSize="10sp"/>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:textSize="15sp"
-                android:id="@+id/answerTextView"
-                android:layout_marginTop="15dp"/>
-
-            <ImageView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="15dp"
-                android:id="@+id/answerImage"
-                android:scaleType="fitCenter"
-                android:adjustViewBounds="true"
-                android:visibility="gone"/>
+                android:orientation="horizontal">
+
+                <de.hdodenhof.circleimageview.CircleImageView
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:id="@+id/answerImageView"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:layout_marginRight="10dp"
+                    android:layout_marginEnd="10dp"
+                    android:visibility="gone"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:textSize="15sp"
+                    android:id="@+id/answerTextView" />
+
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"

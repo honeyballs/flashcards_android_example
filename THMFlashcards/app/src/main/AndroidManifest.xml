@@ -27,10 +27,14 @@
             android:name=".DetailActivity"
             android:label="@string/detail_activity_label" />
 
-        <!-- noHistory makes it so that the user cannot navigate backwards to this activity -->
         <activity
             android:name=".AddCardActivity"
             android:label="@string/add_card_activity_label"
+            />
+
+        <activity
+            android:name=".ViewImageActivity"
+            android:label="@string/view_image_activity_label"
             />
 
         <provider

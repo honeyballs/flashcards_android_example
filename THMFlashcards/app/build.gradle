@@ -43,6 +43,8 @@ dependencies {
     annotationProcessor "android.arch.persistence.room:compiler:1.0.0"
     //This library is used to display round images
     compile 'de.hdodenhof:circleimageview:2.2.0'
+    //Library to use a zoomable ImageView
+    compile 'com.github.chrisbanes:PhotoView:2.1.3'
 
     compile fileTree(dir: 'libs', include: ['*.jar'])
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {

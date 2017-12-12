@@ -72,7 +72,6 @@ public class AddCardActivity extends AppCompatActivity {
         answerEdit = findViewById(R.id.answerEditText);
         addImageButton = findViewById(R.id.addImageButton);
         addImageButton.setOnClickListener(new AddImageListener());
-        //TODO: Change icon, implement image select
 
         //Retrieve the subCategoryId
         Intent intent = getIntent();
@@ -191,6 +190,18 @@ public class AddCardActivity extends AppCompatActivity {
     }
 
     /**
+     * Add the photo to the system's media provider so it can be seen in the gallery.
+     */
+    private void addPhotoToGallery() {
+        Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+        File f = new File(imagePath);
+        Uri contentUri = Uri.fromFile(f);
+        mediaScanIntent.setData(contentUri);
+        this.sendBroadcast(mediaScanIntent);
+    }
+
+
+    /**
      * Pick an image from the gallery.
      */
     private void loadImageGallery() {
@@ -227,6 +238,7 @@ public class AddCardActivity extends AppCompatActivity {
             switch (requestCode) {
                 case CAMERA_REQUEST_CODE:
                     Toast.makeText(this, getResources().getString(R.string.image_added), Toast.LENGTH_SHORT).show();
+                    addPhotoToGallery();
                     break;
                 case GALLERY_REQUEST_CODE:
                   Uri selectedImage = data.getData();

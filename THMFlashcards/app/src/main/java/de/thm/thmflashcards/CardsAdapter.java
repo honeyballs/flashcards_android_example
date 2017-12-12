@@ -2,8 +2,11 @@ package de.thm.thmflashcards;
 
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.media.ExifInterface;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -19,6 +22,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
 import de.hdodenhof.circleimageview.CircleImageView;
@@ -33,7 +38,6 @@ public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
     private ArrayList<Flashcard> cards;
     private Context context;
-
 
     public CardsAdapter(ArrayList<Flashcard> cards, Context context) {
         this.cards = cards;
@@ -56,7 +60,7 @@ public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             return new QuestionViewHolder(v, new AnswerQuestionListener(), new DeleteListener());
         } else {
             View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.card_answer_listitem, parent, false);
-            return new AnswerViewHolder(v, new TurnAroundListener(), new DeleteListener());
+            return new AnswerViewHolder(v, new TurnAroundListener(), new DeleteListener(), new ViewAnswerImageListener());
         }
     }
 
@@ -80,7 +84,11 @@ public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             //Only show the image if needed
             if (item.getAnswerImagePath() != null && !item.getAnswerImagePath().equals("")) {
                 avh.answerImage.setVisibility(View.VISIBLE);
-                avh.answerImage.setImageBitmap(getThumbNail(item.getAnswerImagePath()));
+                Bitmap thumbnail = rotateIfNecessary(item.getAnswerImagePath());
+                avh.answerImage.setImageBitmap(thumbnail);
+                //Set up the listener to start the activity
+                avh.answerImageListener.setPath(item.getAnswerImagePath());
+                avh.answerImageListener.setThumbnail(thumbnail);
             }
             //Calculate the success rate
             double rate = (double) item.getNoCorrect() / ((double) item.getNoCorrect() + (double) item.getNoWrong());
@@ -94,6 +102,56 @@ public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     @Override
     public int getItemCount() {
         return cards.size();
+    }
+
+    /**
+     * Get a thumbnail of an image from a provided Uri. Do this asynchronous so the card can be turned right away.
+     */
+    private Bitmap getImageThumbnail(String path) {
+        return ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(path), 64, 64);
+    }
+
+    /**
+     * On some phones, mainly Samsung, images get rotated. We need to reverse the rotation if necessary.
+     * @param path The path to the image
+     * @return A correctly oriented Bitmap
+     */
+    private Bitmap rotateIfNecessary(String path) {
+        Bitmap bmp = getImageThumbnail(path);
+        Bitmap rotatedBmp = null;
+        try {
+            //Read the rotation information from Exif data
+            ExifInterface ei = new ExifInterface(path);
+            int orientation = ei.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_UNDEFINED);
+            switch (orientation) {
+                case ExifInterface.ORIENTATION_ROTATE_90:
+                    rotatedBmp = rotateBitmap(bmp, 90);
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_180:
+                    rotatedBmp = rotateBitmap(bmp, 180);
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_270:
+                    rotatedBmp = rotateBitmap(bmp, 270);
+                    break;
+                default:
+                    rotatedBmp = bmp;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return rotatedBmp;
+    }
+
+    /**
+     * Rotate a Bitmap image to a certain degree.
+     * @param source The source image
+     * @param angle The required rotation angle
+     * @return A correctly oriented Bitmap
+     */
+    private Bitmap rotateBitmap(Bitmap source, float angle) {
+        Matrix matrix = new Matrix();
+        matrix.postRotate(angle);
+        return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(), matrix, true);
     }
 
     /**
@@ -130,14 +188,17 @@ public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         public CircleImageView answerImage;
         public TextView successRate;
         public TextView turn;
+        public ViewAnswerImageListener answerImageListener;
         public TurnAroundListener turnAroundListener;
         public DeleteListener deleteCardListener;
 
-        public AnswerViewHolder(View itemView, TurnAroundListener listener, DeleteListener deleteListener) {
+        public AnswerViewHolder(View itemView, TurnAroundListener listener, DeleteListener deleteListener, ViewAnswerImageListener imageListener) {
             super(itemView);
             question = itemView.findViewById(R.id.questionTextView);
             answer = itemView.findViewById(R.id.answerTextView);
             answerImage = itemView.findViewById(R.id.answerImageView);
+            answerImageListener = imageListener;
+            answerImage.setOnClickListener(answerImageListener);
             successRate = itemView.findViewById(R.id.successRateView);
             turn = itemView.findViewById(R.id.turnTextView);
             turnAroundListener = listener;
@@ -147,12 +208,7 @@ public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         }
     }
 
-    /**
-     * Get a thumbnail of an image from a provided Uri.
-     */
-    private Bitmap getThumbNail(String path) {
-        return ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(path), 64, 64);
-    }
+
 
     /**
      * Define the listeners
@@ -201,6 +257,31 @@ public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         }
     }
 
+    /**
+     * Starts an Activity to view the answer image in full size.
+     */
+    class ViewAnswerImageListener implements View.OnClickListener {
+
+        private String path;
+        private Bitmap thumbnail;
+
+        @Override
+        public void onClick(View view) {
+            Intent intent = new Intent(context, ViewImageActivity.class);
+            intent.putExtra(context.getResources().getString(R.string.pathKey), path);
+            intent.putExtra(context.getResources().getString(R.string.thumbKey), thumbnail);
+            context.startActivity(intent);
+        }
+
+        public void setPath(String path) {
+            this.path = path;
+        }
+
+        public void setThumbnail(Bitmap thumbnail) {
+            this.thumbnail = thumbnail;
+        }
+    }
+
     //Long click listener to delete questions
     class DeleteListener implements View.OnLongClickListener {
 
@@ -234,6 +315,7 @@ public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             this.position = position;
         }
     }
+
 
     private class UpdateCounter extends AsyncTask<Flashcard, Void, Integer> {
 

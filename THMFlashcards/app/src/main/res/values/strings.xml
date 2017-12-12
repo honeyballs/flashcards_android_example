@@ -55,9 +55,12 @@
 
     <!--Key Strings-->
     <string name="subCategoryKey">subCategory</string>
+    <string name="pathKey">path</string>
+    <string name="thumbKey">thumbnail</string>
 
     <!-- Labels -->
     <string name="detail_activity_label">Flashcards</string>
     <string name="add_card_activity_label">Add card</string>
+    <string name="view_image_activity_label">View Answer</string>
 
 </resources>

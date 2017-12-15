@@ -18,6 +18,8 @@ import android.widget.FrameLayout;
 public class MainActivity extends AppCompatActivity implements Communicator{
 
     private boolean isDualView;
+    private CategoryMasterFragment masterFragment;
+    private boolean[] expanded = null;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -28,13 +30,29 @@ public class MainActivity extends AppCompatActivity implements Communicator{
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        //Check if we have information to restore the expansion status of the fragment
+        if (savedInstanceState != null) {
+            expanded = savedInstanceState.getBooleanArray(getResources().getString(R.string.expandedArrayKey));
+        }
+
         //Set the fragment for the master list and pass this activity as communicator
-        CategoryMasterFragment masterFragment = new CategoryMasterFragment();
+        masterFragment = new CategoryMasterFragment();
         getSupportFragmentManager().beginTransaction().replace(R.id.masterContainer, masterFragment, "MASTER").commit();
 
         FrameLayout detailContainer = findViewById(R.id.detailContainer);
         isDualView = detailContainer != null && detailContainer.getVisibility() == View.VISIBLE;
 
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        //Pass the expansion state to the fragment when this activity is resumed.
+        if (expanded != null) {
+            Bundle args = new Bundle();
+            args.putBooleanArray(getResources().getString(R.string.expandedArrayKey), expanded);
+            masterFragment.setArguments(args);
+        }
     }
 
     @Override
@@ -54,6 +72,12 @@ public class MainActivity extends AppCompatActivity implements Communicator{
                 return super.onOptionsItemSelected(item);
         }
 
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putBooleanArray(getResources().getString(R.string.expandedArrayKey), masterFragment.getExpandedStatus());
     }
 
     @Override

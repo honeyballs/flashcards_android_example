@@ -27,7 +27,7 @@ public interface FlashcardDao {
     @Update
     public int updateFlashcard(Flashcard flashcard);
 
-    @Query("SELECT * FROM flashcards WHERE sub_category_id = :subCategoryId ORDER BY (no_correct / (no_correct + no_wrong)) ASC")
+    @Query("SELECT no_correct/(no_correct + no_wrong) AS quote, * FROM flashcards WHERE sub_category_id = :subCategoryId ORDER BY 1 ASC")
     public List<Flashcard> getAllFlashcardsOfSubCategory(int subCategoryId);
 
 }

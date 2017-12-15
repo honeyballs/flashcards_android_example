@@ -11,7 +11,7 @@
     <!-- Main Activity Strings -->
     <string name="category_dialog_title">Add a category</string>
     <string name="subcategory_dialog_title">Add a subcategory</string>
-    <string name="add_subcategory">Tap to add a subcategory</string>
+    <string name="add_subcategory">Add</string>
     <string name="category_dialog_hint">Category name</string>
     <string name="subcategory_dialog_hint">Subcategory name</string>
     <string name="add_typed">"Add" is not a valid entry. Please choose something else.</string>
@@ -55,8 +55,10 @@
 
     <!--Key Strings-->
     <string name="subCategoryKey">subCategory</string>
+    <string name="expandedArrayKey">expandedArray</string>
     <string name="pathKey">path</string>
     <string name="thumbKey">thumbnail</string>
+    <string name="imagePathBundleKey">imgPath</string>
 
     <!-- Labels -->
     <string name="detail_activity_label">Flashcards</string>

@@ -4,7 +4,10 @@ import android.Manifest;
 import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.Image;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -27,6 +30,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import java.io.File;
@@ -48,12 +52,18 @@ public class AddCardActivity extends AppCompatActivity {
     private static final int GALLERY_REQUEST_CODE = 2;
     private static final int GALLERY_PERMISSION_REQUEST = 22;
 
+    private static final int IMAGE_WIDTH = 640;
+    private static final int IMAGE_HEIGHT = 200;
+
     private EditText questionEdit;
     private EditText answerEdit;
     private FloatingActionButton addImageButton;
+    private ImageView imagePreview;
 
     private String imagePath = null;
     private int subCategoryId = -1;
+
+    private boolean isPortrait;
 
     private AlertDialog cameraOrGalleryDialog = null;
 
@@ -73,12 +83,37 @@ public class AddCardActivity extends AppCompatActivity {
         addImageButton = findViewById(R.id.addImageButton);
         addImageButton.setOnClickListener(new AddImageListener());
 
+        imagePreview = findViewById(R.id.previewImageView);
+
         //Retrieve the subCategoryId
         Intent intent = getIntent();
         if (intent != null && intent.hasExtra(getResources().getString(R.string.subCategoryKey))) {
             subCategoryId = intent.getIntExtra(getResources().getString(R.string.subCategoryKey), -1);
         }
 
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        //Determine the orientation to set the image parameters. If it is in landscape, width and height get switched
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+            isPortrait = true;
+        } else {
+            isPortrait = false;
+        }
+    }
+
+    //Restore the image after the device was rotated.
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        if (imagePath == null) {
+            imagePath = savedInstanceState.getString(getResources().getString(R.string.imagePathBundleKey), null);
+            if (imagePath != null) {
+                new ImageLoader().execute(imagePath);
+            }
+        }
     }
 
     @Override
@@ -108,6 +143,13 @@ public class AddCardActivity extends AppCompatActivity {
     public boolean onSupportNavigateUp() {
         onBackPressed();
         return true;
+    }
+
+    //Save the image path when the device is rotated. EditTexts are automatically saved.
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putString(getResources().getString(R.string.imagePathBundleKey), imagePath);
     }
 
     /**
@@ -237,13 +279,15 @@ public class AddCardActivity extends AppCompatActivity {
         if (resultCode == RESULT_OK) {
             switch (requestCode) {
                 case CAMERA_REQUEST_CODE:
-                    Toast.makeText(this, getResources().getString(R.string.image_added), Toast.LENGTH_SHORT).show();
+                    //Toast.makeText(this, getResources().getString(R.string.image_added), Toast.LENGTH_SHORT).show();
                     addPhotoToGallery();
+                    new ImageLoader().execute(imagePath);
                     break;
                 case GALLERY_REQUEST_CODE:
                   Uri selectedImage = data.getData();
                   imagePath = getRealPathFromURI(selectedImage);
-                  Toast.makeText(this, getResources().getString(R.string.image_added), Toast.LENGTH_SHORT).show();
+                  //Toast.makeText(this, getResources().getString(R.string.image_added), Toast.LENGTH_SHORT).show();
+                    new ImageLoader().execute(imagePath);
                   break;
                 default:
                     break;
@@ -324,5 +368,44 @@ public class AddCardActivity extends AppCompatActivity {
             }
             finish();
         }
+    }
+
+    class ImageLoader extends AsyncTask<String, Void, Bitmap> {
+
+        @Override
+        protected Bitmap doInBackground(String... strings) {
+            //Set the target height and width
+            int reqWidth = 0;
+            int reqHeight = 0;
+            if (isPortrait) {
+                reqWidth = IMAGE_WIDTH;
+                reqHeight = IMAGE_HEIGHT;
+            } else {
+                reqWidth = IMAGE_HEIGHT;
+                reqHeight = IMAGE_WIDTH;
+            }
+
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            //Set this true to get the real size of an image
+            options.inJustDecodeBounds=true;
+            BitmapFactory.decodeFile(strings[0], options);
+
+            //Claculate the inSampleSize
+            options.inSampleSize = ViewImageActivity.calculateInSampleSize(options, reqWidth, reqHeight);
+
+            //Decode the Bitmap with the set inSampleSize
+            options.inJustDecodeBounds=false;
+            Bitmap bmp = BitmapFactory.decodeFile(strings[0], options);
+
+            //After we downsized the Bitmap we may need to rotate it
+            return ViewImageActivity.rotateIfNecessary(strings[0], bmp);
+        }
+
+        @Override
+        protected void onPostExecute(Bitmap bitmap) {
+            imagePreview.setVisibility(View.VISIBLE);
+            imagePreview.setImageBitmap(bitmap);
+        }
+
     }
 }

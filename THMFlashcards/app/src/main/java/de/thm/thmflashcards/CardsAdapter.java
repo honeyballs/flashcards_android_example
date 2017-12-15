@@ -75,10 +75,12 @@ public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             QuestionViewHolder qvh = (QuestionViewHolder) holder;
             //Give the listener the position of the item to later retrieve the actual item from the ArrayList
             qvh.answerQuestionListener.setPosition(position);
+            qvh.deleteCardListener.setPosition(position);
             qvh.question.setText(item.getQuestion());
         } else {
             AnswerViewHolder avh = (AnswerViewHolder) holder;
             avh.turnAroundListener.setPosition(position);
+            avh.deleteCardListener.setPosition(position);
             avh.question.setText(item.getQuestion());
             avh.answer.setText(item.getAnswer());
             //Only show the image if needed

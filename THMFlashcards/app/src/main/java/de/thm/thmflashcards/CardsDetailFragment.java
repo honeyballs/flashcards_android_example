@@ -38,16 +38,6 @@ public class CardsDetailFragment extends Fragment {
 
         cards = new ArrayList<>();
 
-        //Add Test data
-        /*Flashcard card1 = new Flashcard("Frage 1?", "Antwort 1", null);
-        Flashcard card2 = new Flashcard("Frage 2", "Antwort 2", null);
-        Flashcard card3 = new Flashcard("Dies ist eine sehr lange Frage wie man sie normalerweise auch auf Karteikarten findet, oder nicht?", "Die Antwort auf diese Frage ist genau so lang. Hiermit will ich nur testen, wie die Darstellung langer Texte funktioniert", null);
-
-        card3.setCurrentType(Flashcard.ANSWER_TYPE);
-
-        cards.add(card1);
-        cards.add(card2);
-        cards.add(card3);*/
     }
 
     @Nullable
@@ -120,9 +110,10 @@ public class CardsDetailFragment extends Fragment {
         protected void onPostExecute(List<Flashcard> flashcards) {
             cards.clear();
             cards.addAll(flashcards);
+            for (Flashcard card : flashcards) {
+                Log.e("Card quote: ", "" + (double) card.getNoCorrect() / ((double) card.getNoCorrect() + (double) card.getNoWrong()));
+            }
             //Notify the adapter
-            Log.e("In AsyncTask", "true");
-            Log.e("Cards list", cards.toString());
             adapter.notifyDataSetChanged();
         }
     }

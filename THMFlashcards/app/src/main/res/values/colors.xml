@@ -12,4 +12,6 @@
 
     <color name="textColorSecondary">#fff</color>
     <color name="textColorPrimary">#444</color>
+
+    <color name="background">#D3D3D3</color>
 </resources>

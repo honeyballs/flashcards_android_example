@@ -44,6 +44,8 @@ public class CategoryMasterFragment extends Fragment {
     private ExpandableListView categoryView;
     private CategoryListAdapter adapter;
 
+    private boolean[] expanded;
+
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
@@ -93,9 +95,26 @@ public class CategoryMasterFragment extends Fragment {
 
         categories.clear();
         categorieItems.clear();
-
         loadCategories();
+        //Load the passed arguments of the expansion state if they exist. It is set in updateList() after the data is inserted.
+        Bundle args = getArguments();
+        if (args != null) {
+            expanded = args.getBooleanArray(getResources().getString(R.string.expandedArrayKey));
+        }
 
+    }
+
+
+    /**
+     * This method is called by the main activity to get the status and save it on rotation.
+     * @return An array representing the expanded state of the categorie items.
+     */
+    public boolean[] getExpandedStatus() {
+        int numberOfGroups = adapter.getGroupCount();
+        boolean[] groupExpandedArray = new boolean[numberOfGroups];
+        for (int i=0;i<numberOfGroups;i++)
+            groupExpandedArray[i] = categoryView.isGroupExpanded(i);
+        return groupExpandedArray;
     }
 
     /**
@@ -117,6 +136,12 @@ public class CategoryMasterFragment extends Fragment {
      */
     private void updateList() {
         adapter.updateData(categories, categorieItems);
+        //Set the expansion state
+        if (expanded != null) {
+            for (int i=0;i<expanded.length;i++)
+                if (expanded[i])
+                    categoryView.expandGroup(i);
+        }
     }
 
     /**

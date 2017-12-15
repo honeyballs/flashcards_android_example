@@ -79,6 +79,71 @@ public class ViewImageActivity extends AppCompatActivity {
         return true;
     }
 
+    //We do not want to load the full image, it will slow the app down drastically. Instead we load a downsized image
+    //See https://developer.android.com/topic/performance/graphics/load-bitmap.html
+    public static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
+        //Raw size
+        final int height = options.outHeight;
+        final int width = options.outWidth;
+        int inSampleSize = 1;
+
+        if (height > reqHeight || width > reqWidth) {
+
+            final int halfHeight = height/2;
+            final int halfWidth = width/2;
+
+            //Calculate the largest inSampleSize value as a power of 2 which keeps width and height larger than required.
+            while((halfHeight / inSampleSize) >= reqHeight && (halfWidth / inSampleSize) >= reqWidth) {
+                inSampleSize *= 2;
+            }
+
+        }
+        return inSampleSize;
+    }
+
+    /**
+     * On some phones, mainly Samsung, images get rotated. We need to reverse the rotation if necessary.
+     * @param path The path to the image
+     * @return A correctly oriented Bitmap
+     */
+    public static Bitmap rotateIfNecessary(String path, Bitmap source) {
+        Bitmap bmp = source;
+        Bitmap rotatedBmp = null;
+        try {
+            //Read the rotation information from Exif data
+            ExifInterface ei = new ExifInterface(path);
+            int orientation = ei.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_UNDEFINED);
+            switch (orientation) {
+                case ExifInterface.ORIENTATION_ROTATE_90:
+                    rotatedBmp = rotateBitmap(bmp, 90);
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_180:
+                    rotatedBmp = rotateBitmap(bmp, 180);
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_270:
+                    rotatedBmp = rotateBitmap(bmp, 270);
+                    break;
+                default:
+                    rotatedBmp = bmp;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return rotatedBmp;
+    }
+
+    /**
+     * Rotate a Bitmap image to a certain degree.
+     * @param source The source image
+     * @param angle The required rotation angle
+     * @return A correctly oriented Bitmap
+     */
+    public static Bitmap rotateBitmap(Bitmap source, float angle) {
+        Matrix matrix = new Matrix();
+        matrix.postRotate(angle);
+        return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(), matrix, true);
+    }
+
     class ImageLoader extends AsyncTask<String, Void, Bitmap> {
 
         @Override
@@ -115,69 +180,5 @@ public class ViewImageActivity extends AppCompatActivity {
             imageView.setImageBitmap(bitmap);
         }
 
-        //We do not want to load the full image, it will slow the app down drastically. Instead we load a downsized image
-        //See https://developer.android.com/topic/performance/graphics/load-bitmap.html
-        private int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
-            //Raw size
-            final int height = options.outHeight;
-            final int width = options.outWidth;
-            int inSampleSize = 1;
-
-            if (height > reqHeight || width > reqWidth) {
-
-                final int halfHeight = height/2;
-                final int halfWidth = width/2;
-
-                //Calculate the largest inSampleSize value as a power of 2 which keeps width and height larger than required.
-                while((halfHeight / inSampleSize) >= reqHeight && (halfWidth / inSampleSize) >= reqWidth) {
-                    inSampleSize *= 2;
-                }
-
-            }
-            return inSampleSize;
-        }
-
-        /**
-         * On some phones, mainly Samsung, images get rotated. We need to reverse the rotation if necessary.
-         * @param path The path to the image
-         * @return A correctly oriented Bitmap
-         */
-        private Bitmap rotateIfNecessary(String path, Bitmap source) {
-            Bitmap bmp = source;
-            Bitmap rotatedBmp = null;
-            try {
-                //Read the rotation information from Exif data
-                ExifInterface ei = new ExifInterface(path);
-                int orientation = ei.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_UNDEFINED);
-                switch (orientation) {
-                    case ExifInterface.ORIENTATION_ROTATE_90:
-                        rotatedBmp = rotateBitmap(bmp, 90);
-                        break;
-                    case ExifInterface.ORIENTATION_ROTATE_180:
-                        rotatedBmp = rotateBitmap(bmp, 180);
-                        break;
-                    case ExifInterface.ORIENTATION_ROTATE_270:
-                        rotatedBmp = rotateBitmap(bmp, 270);
-                        break;
-                    default:
-                        rotatedBmp = bmp;
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return rotatedBmp;
-        }
-
-        /**
-         * Rotate a Bitmap image to a certain degree.
-         * @param source The source image
-         * @param angle The required rotation angle
-         * @return A correctly oriented Bitmap
-         */
-        private Bitmap rotateBitmap(Bitmap source, float angle) {
-            Matrix matrix = new Matrix();
-            matrix.postRotate(angle);
-            return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(), matrix, true);
-        }
     }
 }

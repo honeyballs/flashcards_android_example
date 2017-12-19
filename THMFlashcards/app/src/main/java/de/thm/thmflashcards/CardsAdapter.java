@@ -8,22 +8,17 @@ import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.media.ExifInterface;
 import android.media.ThumbnailUtils;
-import android.net.Uri;
 import android.os.AsyncTask;
-import android.provider.MediaStore;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
 import de.hdodenhof.circleimageview.CircleImageView;
@@ -31,7 +26,7 @@ import de.thm.thmflashcards.persistance.AppDatabase;
 import de.thm.thmflashcards.persistance.Flashcard;
 
 /**
- * Created by Farea on 28.11.2017.
+ * Created by Yannick Bals on 28.11.2017.
  */
 
 public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -57,10 +52,10 @@ public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         if (viewType == Flashcard.QUESTION_TYPE) {
             View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.card_question_listitem, parent, false);
             //Initialize the listeners here so it only has to be done once when a view is created
-            return new QuestionViewHolder(v, new AnswerQuestionListener(), new DeleteListener());
+            return new QuestionViewHolder(v);
         } else {
             View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.card_answer_listitem, parent, false);
-            return new AnswerViewHolder(v, new TurnAroundListener(), new DeleteListener(), new ViewAnswerImageListener());
+            return new AnswerViewHolder(v);
         }
     }
 
@@ -71,33 +66,33 @@ public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         int viewType = getItemViewType(position);
         Flashcard item = cards.get(position);
 
+        //Assign data and listeners
         if (viewType == Flashcard.QUESTION_TYPE) {
             QuestionViewHolder qvh = (QuestionViewHolder) holder;
-            //Give the listener the position of the item to later retrieve the actual item from the ArrayList
-            qvh.answerQuestionListener.setPosition(position);
-            qvh.deleteCardListener.setPosition(position);
             qvh.question.setText(item.getQuestion());
+            qvh.setListeners(new AnswerQuestionListener(position), new DeleteListener(position));
         } else {
             AnswerViewHolder avh = (AnswerViewHolder) holder;
-            avh.turnAroundListener.setPosition(position);
-            avh.deleteCardListener.setPosition(position);
             avh.question.setText(item.getQuestion());
             avh.answer.setText(item.getAnswer());
-            //Only show the image if needed
-            if (item.getAnswerImagePath() != null && !item.getAnswerImagePath().equals("")) {
-                avh.answerImage.setVisibility(View.VISIBLE);
-                Bitmap thumbnail = rotateIfNecessary(item.getAnswerImagePath());
-                avh.answerImage.setImageBitmap(thumbnail);
-                //Set up the listener to start the activity
-                avh.answerImageListener.setPath(item.getAnswerImagePath());
-                avh.answerImageListener.setThumbnail(thumbnail);
-            }
+            avh.setListeners(new TurnAroundListener(position), new DeleteListener(position));
             //Calculate the success rate
             double rate = (double) item.getNoCorrect() / ((double) item.getNoCorrect() + (double) item.getNoWrong());
             //Convert to percentage
             int ratePercent = (int) (rate * 100);
             String rateText = ratePercent + "%";
             avh.successRate.setText(rateText);
+            //Only show the image if needed
+            if (item.getAnswerImagePath() != null && !item.getAnswerImagePath().equals("")) {
+                avh.answerImage.setVisibility(View.VISIBLE);
+                avh.answerImage.setImageBitmap(null);
+                Bitmap thumbnail = getImageThumbnail(item.getAnswerImagePath());
+                avh.answerImage.setImageBitmap(thumbnail);
+                //Set up the listener to start the activity
+                avh.setImageListener(new ViewAnswerImageListener(item.getAnswerImagePath(), thumbnail));
+            } else {
+                avh.answerImage.setVisibility(View.GONE);
+            }
         }
     }
 
@@ -110,50 +105,8 @@ public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
      * Get a thumbnail of an image from a provided Uri. Do this asynchronous so the card can be turned right away.
      */
     private Bitmap getImageThumbnail(String path) {
-        return ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(path), 64, 64);
-    }
-
-    /**
-     * On some phones, mainly Samsung, images get rotated. We need to reverse the rotation if necessary.
-     * @param path The path to the image
-     * @return A correctly oriented Bitmap
-     */
-    private Bitmap rotateIfNecessary(String path) {
-        Bitmap bmp = getImageThumbnail(path);
-        Bitmap rotatedBmp = null;
-        try {
-            //Read the rotation information from Exif data
-            ExifInterface ei = new ExifInterface(path);
-            int orientation = ei.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_UNDEFINED);
-            switch (orientation) {
-                case ExifInterface.ORIENTATION_ROTATE_90:
-                    rotatedBmp = rotateBitmap(bmp, 90);
-                    break;
-                case ExifInterface.ORIENTATION_ROTATE_180:
-                    rotatedBmp = rotateBitmap(bmp, 180);
-                    break;
-                case ExifInterface.ORIENTATION_ROTATE_270:
-                    rotatedBmp = rotateBitmap(bmp, 270);
-                    break;
-                default:
-                    rotatedBmp = bmp;
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return rotatedBmp;
-    }
-
-    /**
-     * Rotate a Bitmap image to a certain degree.
-     * @param source The source image
-     * @param angle The required rotation angle
-     * @return A correctly oriented Bitmap
-     */
-    private Bitmap rotateBitmap(Bitmap source, float angle) {
-        Matrix matrix = new Matrix();
-        matrix.postRotate(angle);
-        return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(), matrix, true);
+        Bitmap thumbnail = ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(path), 64, 64);
+        return ViewImageActivity.rotateIfNecessary(path, thumbnail);
     }
 
     /**
@@ -165,20 +118,20 @@ public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         public TextView question;
         public TextView knowView;
         public TextView dontKnowView;
-        public AnswerQuestionListener answerQuestionListener;
-        public DeleteListener deleteCardListener;
+        private View parentView;
 
-        public QuestionViewHolder(View itemView, AnswerQuestionListener listener, DeleteListener deleteListener) {
+        public QuestionViewHolder(View itemView) {
             super(itemView);
             question = itemView.findViewById(R.id.question_text);
             knowView = itemView.findViewById(R.id.knowTextView);
             dontKnowView = itemView.findViewById(R.id.dontKnowTextView);
-            //Set the listeners here so it only has to be done once when a view is created
-            this.answerQuestionListener = listener;
+            parentView = itemView;
+        }
+
+        public void setListeners(AnswerQuestionListener answerQuestionListener, DeleteListener deleteListener) {
             knowView.setOnClickListener(answerQuestionListener);
             dontKnowView.setOnClickListener(answerQuestionListener);
-            deleteCardListener = deleteListener;
-            itemView.setOnLongClickListener(deleteCardListener);
+            parentView.setOnLongClickListener(deleteListener);
         }
 
     }
@@ -190,23 +143,25 @@ public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         public CircleImageView answerImage;
         public TextView successRate;
         public TextView turn;
-        public ViewAnswerImageListener answerImageListener;
-        public TurnAroundListener turnAroundListener;
-        public DeleteListener deleteCardListener;
+        private View parentView;
 
-        public AnswerViewHolder(View itemView, TurnAroundListener listener, DeleteListener deleteListener, ViewAnswerImageListener imageListener) {
+        public AnswerViewHolder(View itemView) {
             super(itemView);
             question = itemView.findViewById(R.id.questionTextView);
             answer = itemView.findViewById(R.id.answerTextView);
             answerImage = itemView.findViewById(R.id.answerImageView);
-            answerImageListener = imageListener;
-            answerImage.setOnClickListener(answerImageListener);
             successRate = itemView.findViewById(R.id.successRateView);
             turn = itemView.findViewById(R.id.turnTextView);
-            turnAroundListener = listener;
+            parentView = itemView;
+        }
+
+        public void setListeners(TurnAroundListener turnAroundListener, DeleteListener deleteListener) {
             turn.setOnClickListener(turnAroundListener);
-            deleteCardListener = deleteListener;
-            itemView.setOnLongClickListener(deleteCardListener);
+            parentView.setOnLongClickListener(deleteListener);
+        }
+
+        public void setImageListener(ViewAnswerImageListener answerImageListener) {
+            answerImage.setOnClickListener(answerImageListener);
         }
     }
 
@@ -220,6 +175,10 @@ public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     class AnswerQuestionListener implements View.OnClickListener {
 
         private int position;
+
+        public AnswerQuestionListener(int position) {
+            this.position = position;
+        }
 
         @Override
         public void onClick(View view) {
@@ -237,15 +196,16 @@ public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             notifyDataSetChanged();
         }
 
-        public void setPosition(int position) {
-            this.position = position;
-        }
     }
 
     //Turn the card back around to view the question
     class TurnAroundListener implements View.OnClickListener {
 
         private int position;
+
+        public TurnAroundListener(int position) {
+            this.position = position;
+        }
 
         @Override
         public void onClick(View view) {
@@ -254,9 +214,6 @@ public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             notifyDataSetChanged();
         }
 
-        public void setPosition(int position) {
-            this.position = position;
-        }
     }
 
     /**
@@ -267,6 +224,11 @@ public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         private String path;
         private Bitmap thumbnail;
 
+        public ViewAnswerImageListener(String path, Bitmap thumbnail) {
+            this.path = path;
+            this.thumbnail = thumbnail;
+        }
+
         @Override
         public void onClick(View view) {
             Intent intent = new Intent(context, ViewImageActivity.class);
@@ -275,19 +237,16 @@ public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             context.startActivity(intent);
         }
 
-        public void setPath(String path) {
-            this.path = path;
-        }
-
-        public void setThumbnail(Bitmap thumbnail) {
-            this.thumbnail = thumbnail;
-        }
     }
 
     //Long click listener to delete questions
     class DeleteListener implements View.OnLongClickListener {
 
         private int position;
+
+        public DeleteListener(int position) {
+            this.position = position;
+        }
 
         @Override
         public boolean onLongClick(View view) {
@@ -313,11 +272,7 @@ public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             return true;
         }
 
-        public void setPosition(int position) {
-            this.position = position;
-        }
     }
-
 
     private class UpdateCounter extends AsyncTask<Flashcard, Void, Integer> {
 

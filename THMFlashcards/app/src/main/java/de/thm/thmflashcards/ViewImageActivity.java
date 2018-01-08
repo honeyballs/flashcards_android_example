@@ -4,8 +4,6 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Matrix;
-import android.media.ExifInterface;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -13,15 +11,15 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 
 import com.github.chrisbanes.photoview.PhotoView;
-
-import java.io.IOException;
+import de.thm.thmflashcards.imageHandling.ImageCallback;
+import de.thm.thmflashcards.imageHandling.ImageHandler;
 
 
 /**
  * Created by Yannick Bals on 12.12.2017.
  */
 
-public class ViewImageActivity extends AppCompatActivity {
+public class ViewImageActivity extends AppCompatActivity implements ImageCallback {
 
     private static final int IMAGE_WIDTH = 640;
     private static final int IMAGE_HEIGHT = 960;
@@ -30,6 +28,8 @@ public class ViewImageActivity extends AppCompatActivity {
     private Bitmap thumbnail;
     private PhotoView imageView;
     private boolean isPortrait;
+
+    private ImageHandler imageHandler = new ImageHandler(this, IMAGE_WIDTH, IMAGE_HEIGHT);
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -70,7 +70,7 @@ public class ViewImageActivity extends AppCompatActivity {
             isPortrait = false;
         }
 
-        new ImageLoader().execute(path);
+        imageHandler.loadImageFromStringPath(path, isPortrait);
     }
 
     @Override
@@ -79,106 +79,24 @@ public class ViewImageActivity extends AppCompatActivity {
         return true;
     }
 
-    //We do not want to load the full image, it will slow the app down drastically. Instead we load a downsized image
-    //See https://developer.android.com/topic/performance/graphics/load-bitmap.html
-    public static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
-        //Raw size
-        final int height = options.outHeight;
-        final int width = options.outWidth;
-        int inSampleSize = 1;
+    /**
+     * Inherited from ImageCallback, not needed here since the path is passed from the card.
+     *
+     * @param path Path to the image as String
+     */
+    @Override
+    public void setPathToImage(String path) {
 
-        if (height > reqHeight || width > reqWidth) {
-
-            final int halfHeight = height/2;
-            final int halfWidth = width/2;
-
-            //Calculate the largest inSampleSize value as a power of 2 which keeps width and height larger than required.
-            while((halfHeight / inSampleSize) >= reqHeight && (halfWidth / inSampleSize) >= reqWidth) {
-                inSampleSize *= 2;
-            }
-
-        }
-        return inSampleSize;
     }
 
     /**
-     * On some phones, mainly Samsung, images get rotated. We need to reverse the rotation if necessary.
-     * @param path The path to the image
-     * @return A correctly oriented Bitmap
+     * Inherited from ImageCallback
+     *
+     * @param bmp Image to set for the ImageView
      */
-    public static Bitmap rotateIfNecessary(String path, Bitmap source) {
-        Bitmap bmp = source;
-        Bitmap rotatedBmp = null;
-        try {
-            //Read the rotation information from Exif data
-            ExifInterface ei = new ExifInterface(path);
-            int orientation = ei.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_UNDEFINED);
-            switch (orientation) {
-                case ExifInterface.ORIENTATION_ROTATE_90:
-                    rotatedBmp = rotateBitmap(bmp, 90);
-                    break;
-                case ExifInterface.ORIENTATION_ROTATE_180:
-                    rotatedBmp = rotateBitmap(bmp, 180);
-                    break;
-                case ExifInterface.ORIENTATION_ROTATE_270:
-                    rotatedBmp = rotateBitmap(bmp, 270);
-                    break;
-                default:
-                    rotatedBmp = bmp;
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return rotatedBmp;
+    @Override
+    public void setImage(Bitmap bmp) {
+        imageView.setImageBitmap(bmp);
     }
 
-    /**
-     * Rotate a Bitmap image to a certain degree.
-     * @param source The source image
-     * @param angle The required rotation angle
-     * @return A correctly oriented Bitmap
-     */
-    public static Bitmap rotateBitmap(Bitmap source, float angle) {
-        Matrix matrix = new Matrix();
-        matrix.postRotate(angle);
-        return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(), matrix, true);
-    }
-
-    class ImageLoader extends AsyncTask<String, Void, Bitmap> {
-
-        @Override
-        protected Bitmap doInBackground(String... strings) {
-            //Set the target height and width
-            int reqWidth = 0;
-            int reqHeight = 0;
-            if (isPortrait) {
-                reqWidth = IMAGE_WIDTH;
-                reqHeight = IMAGE_HEIGHT;
-            } else {
-                reqWidth = IMAGE_HEIGHT;
-                reqHeight = IMAGE_WIDTH;
-            }
-
-            BitmapFactory.Options options = new BitmapFactory.Options();
-            //Set this true to get the real size of an image
-            options.inJustDecodeBounds=true;
-            BitmapFactory.decodeFile(strings[0], options);
-
-            //Claculate the inSampleSize
-            options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
-
-            //Decode the Bitmap with the set inSampleSize
-            options.inJustDecodeBounds=false;
-            Bitmap bmp = BitmapFactory.decodeFile(strings[0], options);
-
-            //After we downsized the Bitmap we may need to rotate it
-            return rotateIfNecessary(strings[0], bmp);
-        }
-
-        @Override
-        protected void onPostExecute(Bitmap bitmap) {
-            imageView.setImageBitmap(bitmap);
-        }
-
-    }
 }

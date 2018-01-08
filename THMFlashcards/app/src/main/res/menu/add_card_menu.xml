@@ -8,10 +8,4 @@
         android:icon="@drawable/ic_done_white_24dp"
         app:showAsAction="always"/>
 
-    <item
-        android:id="@+id/about_item"
-        android:title="@string/menu_about"
-        android:icon="@drawable/ic_info_white_24dp"
-        app:showAsAction="never"/>
-
 </menu>

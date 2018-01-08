@@ -11,7 +11,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 /**
- * Created by Farea on 10.11.2017.
+ * Created by Yannick Bals on 10.11.2017.
  */
 
 public class DetailActivity extends AppCompatActivity {
@@ -41,26 +41,6 @@ public class DetailActivity extends AppCompatActivity {
             idBundle.putInt(getResources().getString(R.string.subCategoryKey),
                     intent.getIntExtra(getResources().getString(R.string.subCategoryKey), -1));
             getSupportFragmentManager().findFragmentById(R.id.detailFragment).setArguments(idBundle);
-        }
-
-    }
-
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main_menu, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-
-        switch (item.getItemId()) {
-            case R.id.about_item:
-                //Do shit
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
         }
 
     }

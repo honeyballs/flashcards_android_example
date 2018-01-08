@@ -38,6 +38,8 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import de.thm.thmflashcards.imageHandling.ImageCallback;
+import de.thm.thmflashcards.imageHandling.ImageHandler;
 import de.thm.thmflashcards.persistance.AppDatabase;
 import de.thm.thmflashcards.persistance.Flashcard;
 
@@ -45,7 +47,7 @@ import de.thm.thmflashcards.persistance.Flashcard;
  * Created by Yannick Bals on 01.12.2017.
  */
 
-public class AddCardActivity extends AppCompatActivity {
+public class AddCardActivity extends AppCompatActivity implements ImageCallback {
 
     private static final int CAMERA_REQUEST_CODE = 1;
     private static final int CAMERA_PERMISSION_REQUEST = 11;
@@ -66,6 +68,8 @@ public class AddCardActivity extends AppCompatActivity {
     private boolean isPortrait;
 
     private AlertDialog cameraOrGalleryDialog = null;
+
+    private ImageHandler imageHandler = new ImageHandler(this, IMAGE_WIDTH, IMAGE_HEIGHT);
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -111,7 +115,7 @@ public class AddCardActivity extends AppCompatActivity {
         if (imagePath == null) {
             imagePath = savedInstanceState.getString(getResources().getString(R.string.imagePathBundleKey), null);
             if (imagePath != null) {
-                new ImageLoader().execute(imagePath);
+                imageHandler.loadImageFromStringPath(imagePath, isPortrait);
             }
         }
     }
@@ -128,9 +132,6 @@ public class AddCardActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case R.id.confirm_item:
                 addFlashcardToDB();
-                return true;
-            case R.id.about_item:
-                //Do shit
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -195,7 +196,7 @@ public class AddCardActivity extends AppCompatActivity {
             //Create a file to pass to the camera activity
             File imageFile = null;
             try {
-                imageFile = createImageFile();
+                imageFile = imageHandler.createImageFile();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -210,40 +211,6 @@ public class AddCardActivity extends AppCompatActivity {
     }
 
     /**
-     * Create a file to save the image in. This is passed to the camera app via the intent.
-     *
-     * @return
-     */
-    private File createImageFile() throws IOException {
-        // Create an image file name
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        String imageFileName = "JPEG_" + timeStamp + "_";
-        //Put our files into an extra folder
-        File storageDir =  Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-        File image = File.createTempFile(
-                imageFileName,  /* prefix */
-                ".jpg",         /* suffix */
-                storageDir      /* directory */
-        );
-
-        // Save the path
-        imagePath = image.getAbsolutePath();
-        return image;
-    }
-
-    /**
-     * Add the photo to the system's media provider so it can be seen in the gallery.
-     */
-    private void addPhotoToGallery() {
-        Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-        File f = new File(imagePath);
-        Uri contentUri = Uri.fromFile(f);
-        mediaScanIntent.setData(contentUri);
-        this.sendBroadcast(mediaScanIntent);
-    }
-
-
-    /**
      * Pick an image from the gallery.
      */
     private void loadImageGallery() {
@@ -256,23 +223,6 @@ public class AddCardActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * Gets the real absolute path of an image from an Uri.
-     *
-     * @param contentUri The Uri you want to resolve
-     * @return The absolute path
-     */
-    private String getRealPathFromURI(Uri contentUri) {
-        String[] proj = { MediaStore.Images.Media.DATA };
-        CursorLoader loader = new CursorLoader(this, contentUri, proj, null, null, null);
-        Cursor cursor = loader.loadInBackground();
-        int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-        cursor.moveToFirst();
-        String result = cursor.getString(column_index);
-        cursor.close();
-        return result;
-    }
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -280,14 +230,14 @@ public class AddCardActivity extends AppCompatActivity {
             switch (requestCode) {
                 case CAMERA_REQUEST_CODE:
                     //Toast.makeText(this, getResources().getString(R.string.image_added), Toast.LENGTH_SHORT).show();
-                    addPhotoToGallery();
-                    new ImageLoader().execute(imagePath);
+                    imageHandler.addPhotoToGallery(imagePath);
+                    imageHandler.loadImageFromStringPath(imagePath, isPortrait);
                     break;
                 case GALLERY_REQUEST_CODE:
                   Uri selectedImage = data.getData();
-                  imagePath = getRealPathFromURI(selectedImage);
+                  imagePath = imageHandler.getRealPathFromURI(selectedImage);
                   //Toast.makeText(this, getResources().getString(R.string.image_added), Toast.LENGTH_SHORT).show();
-                    new ImageLoader().execute(imagePath);
+                    imageHandler.loadImageFromStringPath(imagePath, isPortrait);
                   break;
                 default:
                     break;
@@ -316,6 +266,27 @@ public class AddCardActivity extends AppCompatActivity {
                 Toast.makeText(this, getResources().getString(R.string.gallery_permission_denied), Toast.LENGTH_LONG).show();
             }
         }
+    }
+
+    /**
+     * Implemented from ImageCallback
+     *
+     * @param path Path to the image as String
+     */
+    @Override
+    public void setPathToImage(String path) {
+        imagePath = path;
+    }
+
+    /**
+     * Inherited from ImageCallback
+     *
+     * @param bmp Bitmap to show in ImageView
+     */
+    @Override
+    public void setImage(Bitmap bmp) {
+        imagePreview.setVisibility(View.VISIBLE);
+        imagePreview.setImageBitmap(bmp);
     }
 
     private class AddImageListener implements View.OnClickListener {
@@ -370,42 +341,4 @@ public class AddCardActivity extends AppCompatActivity {
         }
     }
 
-    class ImageLoader extends AsyncTask<String, Void, Bitmap> {
-
-        @Override
-        protected Bitmap doInBackground(String... strings) {
-            //Set the target height and width
-            int reqWidth = 0;
-            int reqHeight = 0;
-            if (isPortrait) {
-                reqWidth = IMAGE_WIDTH;
-                reqHeight = IMAGE_HEIGHT;
-            } else {
-                reqWidth = IMAGE_HEIGHT;
-                reqHeight = IMAGE_WIDTH;
-            }
-
-            BitmapFactory.Options options = new BitmapFactory.Options();
-            //Set this true to get the real size of an image
-            options.inJustDecodeBounds=true;
-            BitmapFactory.decodeFile(strings[0], options);
-
-            //Claculate the inSampleSize
-            options.inSampleSize = ViewImageActivity.calculateInSampleSize(options, reqWidth, reqHeight);
-
-            //Decode the Bitmap with the set inSampleSize
-            options.inJustDecodeBounds=false;
-            Bitmap bmp = BitmapFactory.decodeFile(strings[0], options);
-
-            //After we downsized the Bitmap we may need to rotate it
-            return ViewImageActivity.rotateIfNecessary(strings[0], bmp);
-        }
-
-        @Override
-        protected void onPostExecute(Bitmap bitmap) {
-            imagePreview.setVisibility(View.VISIBLE);
-            imagePreview.setImageBitmap(bitmap);
-        }
-
-    }
 }

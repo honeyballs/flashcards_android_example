@@ -6,7 +6,7 @@
     <string name="cancel">Cancel</string>
 
     <!-- Menu Items -->
-    <string name="menu_about">About</string>
+    <string name="menu_settings">Settings</string>
 
     <!-- Main Activity Strings -->
     <string name="category_dialog_title">Add a category</string>
@@ -52,8 +52,13 @@
     <string name="rate">Success rate:</string>
     <string name="turn">TURN AROUND</string>
 
+    <!-- Settings Strings -->
+    <string name="notifications">Notifications</string>
+    <string name="notifications_option">When turned on you will receive daily reminders.</string>
 
     <!--Key Strings-->
+    <string name="remindMe">remindMe</string>
+    <string name="n_channel">flashcards_channel</string>
     <string name="subCategoryKey">subCategory</string>
     <string name="expandedArrayKey">expandedArray</string>
     <string name="pathKey">path</string>
@@ -64,5 +69,12 @@
     <string name="detail_activity_label">Flashcards</string>
     <string name="add_card_activity_label">Add card</string>
     <string name="view_image_activity_label">View Answer</string>
+    <string name="settings_activity_label">Settings</string>
+
+    <!--Notification-->
+    <string name="channel_name">Learning reminders</string>
+    <string name="channel_desc">Reminds you daily to work through some flashcards.</string>
+    <string name="notification_title">Learning reminder</string>
+    <string name="notification_content">It\'s been a while since you looked at your flashcards.</string>
 
 </resources>

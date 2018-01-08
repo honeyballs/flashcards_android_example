@@ -37,6 +37,10 @@
             android:label="@string/view_image_activity_label"
             />
 
+        <activity android:name=".SettingsActivity" android:label="@string/settings_activity_label" />
+
+        <service android:name=".ReminderService" />
+
         <provider
             android:name="android.support.v4.content.FileProvider"
             android:authorities="de.thm.thmflashcards.fileprovider"

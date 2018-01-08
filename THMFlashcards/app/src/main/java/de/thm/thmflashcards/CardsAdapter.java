@@ -5,23 +5,20 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Matrix;
-import android.media.ExifInterface;
 import android.media.ThumbnailUtils;
 import android.os.AsyncTask;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.IOException;
 import java.util.ArrayList;
 
 import de.hdodenhof.circleimageview.CircleImageView;
+import de.thm.thmflashcards.imageHandling.ImageHandler;
 import de.thm.thmflashcards.persistance.AppDatabase;
 import de.thm.thmflashcards.persistance.Flashcard;
 
@@ -106,13 +103,12 @@ public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
      */
     private Bitmap getImageThumbnail(String path) {
         Bitmap thumbnail = ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(path), 64, 64);
-        return ViewImageActivity.rotateIfNecessary(path, thumbnail);
+        return ImageHandler.rotateIfNecessary(path, thumbnail);
     }
 
     /**
      * Define Viewholders for questions and answers
      */
-
     public static class QuestionViewHolder extends RecyclerView.ViewHolder {
 
         public TextView question;

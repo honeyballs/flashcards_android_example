@@ -80,10 +80,9 @@ public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             String rateText = ratePercent + "%";
             avh.successRate.setText(rateText);
             //Only show the image if needed
-            if (item.getAnswerImagePath() != null && !item.getAnswerImagePath().equals("")) {
+            if (item.getAnswerImage() != null) {
                 avh.answerImage.setVisibility(View.VISIBLE);
-                avh.answerImage.setImageBitmap(null);
-                Bitmap thumbnail = getImageThumbnail(item.getAnswerImagePath());
+                Bitmap thumbnail = item.getAnswerImage();
                 avh.answerImage.setImageBitmap(thumbnail);
                 //Set up the listener to start the activity
                 avh.setImageListener(new ViewAnswerImageListener(item.getAnswerImagePath(), thumbnail));
@@ -96,14 +95,6 @@ public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     @Override
     public int getItemCount() {
         return cards.size();
-    }
-
-    /**
-     * Get a thumbnail of an image from a provided Uri. Do this asynchronous so the card can be turned right away.
-     */
-    private Bitmap getImageThumbnail(String path) {
-        Bitmap thumbnail = ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(path), 64, 64);
-        return ImageHandler.rotateIfNecessary(path, thumbnail);
     }
 
     /**

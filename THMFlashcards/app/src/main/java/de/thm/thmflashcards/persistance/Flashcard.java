@@ -6,6 +6,7 @@ import android.arch.persistence.room.ForeignKey;
 import android.arch.persistence.room.Ignore;
 import android.arch.persistence.room.Index;
 import android.arch.persistence.room.PrimaryKey;
+import android.graphics.Bitmap;
 
 /**
  * Created by Yannick Bals on 28.11.2017.
@@ -45,6 +46,9 @@ public class Flashcard {
 
     @Ignore
     private double quote;
+
+    @Ignore
+    private Bitmap answerImage = null;
 
     //Constructor to set a text answer and an image path - set null if one isn't there
     public Flashcard(String question, String answer, String answerImagePath) {
@@ -126,5 +130,13 @@ public class Flashcard {
 
     public void setQuote(double quote) {
         this.quote = quote;
+    }
+
+    public Bitmap getAnswerImage() {
+        return answerImage;
+    }
+
+    public void setAnswerImage(Bitmap answerImage) {
+        this.answerImage = answerImage;
     }
 }

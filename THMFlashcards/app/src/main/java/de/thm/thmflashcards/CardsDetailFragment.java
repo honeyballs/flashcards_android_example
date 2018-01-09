@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import de.thm.thmflashcards.imageHandling.ImageHandler;
 import de.thm.thmflashcards.persistance.AppDatabase;
 import de.thm.thmflashcards.persistance.Flashcard;
 
@@ -86,6 +87,8 @@ public class CardsDetailFragment extends Fragment {
      * Refresh the flashcards
      */
     private void reloadCards() {
+        //Show that we are loading
+        swipeRefresh.setRefreshing(true);
         new CardsLoader().execute(subCategoryId);
     }
 
@@ -117,7 +120,6 @@ public class CardsDetailFragment extends Fragment {
 
         @Override
         public void onRefresh() {
-            swipeRefresh.setRefreshing(true);
             reloadCards();
         }
     }
@@ -127,17 +129,18 @@ public class CardsDetailFragment extends Fragment {
 
         @Override
         protected List<Flashcard> doInBackground(Integer... integers) {
-            Log.e("subCategoryId", ""+integers[0]);
+            //Load cards from DB
             AppDatabase db = AppDatabase.getAppDataBase(getActivity());
-            return db.flashcardDao().getAllFlashcardsOfSubCategory(integers[0]);
-        }
+            List<Flashcard> flashcards = db.flashcardDao().getAllFlashcardsOfSubCategory(integers[0]);
 
-        @Override
-        protected void onPostExecute(List<Flashcard> flashcards) {
-            //Calculate the success quote for all questions
+            //Calculate the success quote for all questions and preload all images
             for (Flashcard card : flashcards) {
                 card.setQuote((double) card.getNoCorrect() / ((double) card.getNoCorrect() + (double) card.getNoWrong()));
+                if (card.getAnswerImagePath() != null && !card.getAnswerImagePath().equals("")) {
+                    card.setAnswerImage(ImageHandler.getImageThumbnail(card.getAnswerImagePath()));
+                }
             }
+
             //Sort the Arraylist by quote
             Collections.sort(flashcards, new Comparator<Flashcard>() {
                 @Override
@@ -153,11 +156,16 @@ public class CardsDetailFragment extends Fragment {
                 }
             });
 
+            return flashcards;
+        }
+
+        @Override
+        protected void onPostExecute(List<Flashcard> flashcards) {
             cards.clear();
             cards.addAll(flashcards);
-
             //Notify the adapter
             adapter.notifyDataSetChanged();
+            //Stop loading animation
             swipeRefresh.setRefreshing(false);
         }
     }

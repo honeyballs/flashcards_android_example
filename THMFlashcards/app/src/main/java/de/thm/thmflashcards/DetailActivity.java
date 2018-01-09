@@ -16,6 +16,8 @@ import android.view.MenuItem;
 
 public class DetailActivity extends AppCompatActivity {
 
+    private CardsDetailFragment fragment;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -40,9 +42,26 @@ public class DetailActivity extends AppCompatActivity {
             Log.e("id", ""+intent.getIntExtra(getResources().getString(R.string.subCategoryKey), -1));
             idBundle.putInt(getResources().getString(R.string.subCategoryKey),
                     intent.getIntExtra(getResources().getString(R.string.subCategoryKey), -1));
-            getSupportFragmentManager().findFragmentById(R.id.detailFragment).setArguments(idBundle);
+            fragment = (CardsDetailFragment) getSupportFragmentManager().findFragmentById(R.id.detailFragment);
+            fragment.setArguments(idBundle);
         }
 
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.detail_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.turnAllCards) {
+            fragment.turnAllCards();
+            return true;
+        } else {
+            return super.onOptionsItemSelected(item);
+        }
     }
 
     //Navigate Back when the back arrow is pressed

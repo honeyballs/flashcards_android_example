@@ -43,6 +43,9 @@ public class Flashcard {
     @Ignore
     private int currentType;
 
+    @Ignore
+    private double quote;
+
     //Constructor to set a text answer and an image path - set null if one isn't there
     public Flashcard(String question, String answer, String answerImagePath) {
         this.question = question;
@@ -115,5 +118,13 @@ public class Flashcard {
 
     public void setCurrentType(int currentType) {
         this.currentType = currentType;
+    }
+
+    public double getQuote() {
+        return quote;
+    }
+
+    public void setQuote(double quote) {
+        this.quote = quote;
     }
 }

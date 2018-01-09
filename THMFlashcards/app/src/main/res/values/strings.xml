@@ -7,6 +7,7 @@
 
     <!-- Menu Items -->
     <string name="menu_settings">Settings</string>
+    <string name="menu_turn">Turn back all cards</string>
 
     <!-- Main Activity Strings -->
     <string name="category_dialog_title">Add a category</string>

@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -14,6 +15,8 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import de.thm.thmflashcards.persistance.AppDatabase;
@@ -31,6 +34,7 @@ public class CardsDetailFragment extends Fragment {
     private RecyclerView list;
     private CardsAdapter adapter;
     private FloatingActionButton addCardButton;
+    private SwipeRefreshLayout swipeRefresh;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -60,6 +64,10 @@ public class CardsDetailFragment extends Fragment {
         addCardButton = view.findViewById(R.id.addCardButton);
         addCardButton.setOnClickListener(new AddCardListener());
 
+        //Set up a listener to refresh the list when pulled down
+        swipeRefresh = view.findViewById(R.id.swipeRefresh);
+        swipeRefresh.setOnRefreshListener(new RefreshListener());
+
         return view;
     }
 
@@ -74,14 +82,23 @@ public class CardsDetailFragment extends Fragment {
         }
     }
 
-
-
     /**
      * Refresh the flashcards
      */
     private void reloadCards() {
         new CardsLoader().execute(subCategoryId);
     }
+
+    /**
+     * Turn all cards back to the question side
+     */
+    public void turnAllCards() {
+        for (Flashcard card : cards) {
+            card.setCurrentType(Flashcard.QUESTION_TYPE);
+        }
+        adapter.notifyDataSetChanged();
+    }
+
 
     /**
      * Start the Add Cards Activity.
@@ -93,6 +110,15 @@ public class CardsDetailFragment extends Fragment {
             Intent intent = new Intent(getActivity(), AddCardActivity.class);
             intent.putExtra(getResources().getString(R.string.subCategoryKey), subCategoryId);
             startActivity(intent);
+        }
+    }
+
+    private class RefreshListener implements SwipeRefreshLayout.OnRefreshListener {
+
+        @Override
+        public void onRefresh() {
+            swipeRefresh.setRefreshing(true);
+            reloadCards();
         }
     }
 
@@ -108,13 +134,31 @@ public class CardsDetailFragment extends Fragment {
 
         @Override
         protected void onPostExecute(List<Flashcard> flashcards) {
+            //Calculate the success quote for all questions
+            for (Flashcard card : flashcards) {
+                card.setQuote((double) card.getNoCorrect() / ((double) card.getNoCorrect() + (double) card.getNoWrong()));
+            }
+            //Sort the Arraylist by quote
+            Collections.sort(flashcards, new Comparator<Flashcard>() {
+                @Override
+                public int compare(Flashcard flashcard, Flashcard t1) {
+                    //Return -1 if less, 0 if equal, 1 if greater
+                    if (flashcard.getQuote() < t1.getQuote()) {
+                        return -1;
+                    } else if (flashcard.getQuote() == t1.getQuote()) {
+                        return 0;
+                    } else {
+                        return 1;
+                    }
+                }
+            });
+
             cards.clear();
             cards.addAll(flashcards);
-            for (Flashcard card : flashcards) {
-                Log.e("Card quote: ", "" + (double) card.getNoCorrect() / ((double) card.getNoCorrect() + (double) card.getNoWrong()));
-            }
+
             //Notify the adapter
             adapter.notifyDataSetChanged();
+            swipeRefresh.setRefreshing(false);
         }
     }
 

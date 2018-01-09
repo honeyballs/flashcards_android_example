@@ -30,6 +30,7 @@ public class MainActivity extends AppCompatActivity implements Communicator{
 
     private boolean isDualView;
     private CategoryMasterFragment masterFragment;
+    private CardsDetailFragment detailFragment = null;
     private boolean[] expanded = null;
 
     @Override
@@ -81,18 +82,26 @@ public class MainActivity extends AppCompatActivity implements Communicator{
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main_menu, menu);
+        //If the Master Detail view is active we need to display the turn button in this toolbar.
+        if (isDualView) {
+            getMenuInflater().inflate(R.menu.main_w_turn_menu, menu);
+        } else {
+            getMenuInflater().inflate(R.menu.main_menu, menu);
+        }
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-
         switch (item.getItemId()) {
             case R.id.settings_item:
                 Intent settingsIntent = new Intent(this, SettingsActivity.class);
                 startActivity(settingsIntent);
                 return true;
+            case R.id.turnAllCards:
+                if (detailFragment != null) {
+                    detailFragment.turnAllCards();
+                }
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -108,7 +117,7 @@ public class MainActivity extends AppCompatActivity implements Communicator{
     @Override
     public void loadDetailFor(int subCategoryId) {
         if (isDualView) {
-            CardsDetailFragment detailFragment = new CardsDetailFragment();
+            detailFragment = new CardsDetailFragment();
             Bundle idBundle = new Bundle();
             idBundle.putInt(getResources().getString(R.string.subCategoryKey), subCategoryId);
             detailFragment.setArguments(idBundle);

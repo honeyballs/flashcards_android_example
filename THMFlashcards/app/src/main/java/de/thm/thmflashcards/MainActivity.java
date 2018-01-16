@@ -54,6 +54,19 @@ public class MainActivity extends AppCompatActivity implements Communicator{
         FrameLayout detailContainer = findViewById(R.id.detailContainer);
         isDualView = detailContainer != null && detailContainer.getVisibility() == View.VISIBLE;
 
+        //Set a daily reminder if checked in the settings.
+        // This is set in onCreate to start it initially.
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        //If no preference is set it will default to true
+        boolean remind = prefs.getBoolean(getString(R.string.remindMe), true);
+        if (remind) {
+            initNotificationChannel();
+            startAlarmIfNotExists();
+        } else {
+            deleteNotificationChannel();
+            stopAlarmIfExists();
+        }
+
     }
 
     @Override
@@ -64,19 +77,6 @@ public class MainActivity extends AppCompatActivity implements Communicator{
             Bundle args = new Bundle();
             args.putBooleanArray(getResources().getString(R.string.expandedArrayKey), expanded);
             masterFragment.setArguments(args);
-        }
-
-        //Set a daily reminder if checked in the settings.
-        // We check this here because onResume is called after navigating back from the settings.
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        //If no preference is set it will default to true
-        boolean remind = prefs.getBoolean(getString(R.string.remindMe), true);
-        if (remind) {
-            initNotificationChannel();
-            startAlarmIfNotExists();
-        } else {
-            deleteNotificationChannel();
-            stopAlarmIfExists();
         }
     }
 
@@ -184,8 +184,7 @@ public class MainActivity extends AppCompatActivity implements Communicator{
             Calendar calendar = Calendar.getInstance();
             calendar.set(Calendar.SECOND, 0);
             calendar.set(Calendar.MINUTE, 0);
-            calendar.set(Calendar.HOUR, 9);
-            calendar.set(Calendar.DAY_OF_MONTH, 1);
+            calendar.set(Calendar.HOUR_OF_DAY, 9);
             //Set up the alarm. This will send a daily notification at 9:00am
             alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), 1000*60*60*24, startServicePending);
         }

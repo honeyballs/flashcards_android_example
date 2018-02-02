@@ -5,6 +5,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.media.ThumbnailUtils;
 import android.os.AsyncTask;
 import android.support.v7.app.AlertDialog;
@@ -30,10 +31,17 @@ public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
     private ArrayList<Flashcard> cards;
     private Context context;
+    private RecyclerView mRecyclerView;
 
     public CardsAdapter(ArrayList<Flashcard> cards, Context context) {
         this.cards = cards;
         this.context = context;
+    }
+
+    @Override
+    public void onAttachedToRecyclerView(RecyclerView recyclerView) {
+        super.onAttachedToRecyclerView(recyclerView);
+        mRecyclerView = recyclerView;
     }
 
     //Check whether the answer or question should be displayed
@@ -48,10 +56,18 @@ public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
         if (viewType == Flashcard.QUESTION_TYPE) {
             View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.card_question_listitem, parent, false);
+            v.setOnLongClickListener(new DeleteListener());
             //Initialize the listeners here so it only has to be done once when a view is created
-            return new QuestionViewHolder(v);
+            QuestionViewHolder qvh = new QuestionViewHolder(v);
+            qvh.turn.setOnClickListener(new TurnAroundListener());
+            return qvh;
         } else {
             View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.card_answer_listitem, parent, false);
+            v.setOnLongClickListener(new DeleteListener());
+            AnswerViewHolder avh = new AnswerViewHolder(v);
+            DidKnowListener didKnowListener = new DidKnowListener();
+            avh.knowView.setOnClickListener(didKnowListener);
+            avh.dontKnowView.setOnClickListener(didKnowListener);
             return new AnswerViewHolder(v);
         }
     }
@@ -67,12 +83,10 @@ public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         if (viewType == Flashcard.QUESTION_TYPE) {
             QuestionViewHolder qvh = (QuestionViewHolder) holder;
             qvh.question.setText(item.getQuestion());
-            qvh.setListeners(new AnswerQuestionListener(position), new DeleteListener(position));
         } else {
             AnswerViewHolder avh = (AnswerViewHolder) holder;
             avh.question.setText(item.getQuestion());
             avh.answer.setText(item.getAnswer());
-            avh.setListeners(new TurnAroundListener(position), new DeleteListener(position));
             //Calculate the success rate
             double rate = (double) item.getNoCorrect() / ((double) item.getNoCorrect() + (double) item.getNoWrong());
             //Convert to percentage
@@ -103,22 +117,14 @@ public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     public static class QuestionViewHolder extends RecyclerView.ViewHolder {
 
         public TextView question;
-        public TextView knowView;
-        public TextView dontKnowView;
+        public TextView turn;
         private View parentView;
 
         public QuestionViewHolder(View itemView) {
             super(itemView);
             question = itemView.findViewById(R.id.question_text);
-            knowView = itemView.findViewById(R.id.knowTextView);
-            dontKnowView = itemView.findViewById(R.id.dontKnowTextView);
+            turn = itemView.findViewById(R.id.turnTextView);
             parentView = itemView;
-        }
-
-        public void setListeners(AnswerQuestionListener answerQuestionListener, DeleteListener deleteListener) {
-            knowView.setOnClickListener(answerQuestionListener);
-            dontKnowView.setOnClickListener(answerQuestionListener);
-            parentView.setOnLongClickListener(deleteListener);
         }
 
     }
@@ -129,7 +135,9 @@ public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         public TextView answer;
         public CircleImageView answerImage;
         public TextView successRate;
-        public TextView turn;
+        public TextView knowView;
+        public TextView dontKnowView;
+
         private View parentView;
 
         public AnswerViewHolder(View itemView) {
@@ -138,13 +146,9 @@ public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             answer = itemView.findViewById(R.id.answerTextView);
             answerImage = itemView.findViewById(R.id.answerImageView);
             successRate = itemView.findViewById(R.id.successRateView);
-            turn = itemView.findViewById(R.id.turnTextView);
+            knowView = itemView.findViewById(R.id.knowTextView);
+            dontKnowView = itemView.findViewById(R.id.dontKnowTextView);
             parentView = itemView;
-        }
-
-        public void setListeners(TurnAroundListener turnAroundListener, DeleteListener deleteListener) {
-            turn.setOnClickListener(turnAroundListener);
-            parentView.setOnLongClickListener(deleteListener);
         }
 
         public void setImageListener(ViewAnswerImageListener answerImageListener) {
@@ -159,16 +163,19 @@ public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
      */
 
     //Increase one of the answer scores (wrong or right) and turn the card around to view the answer
-    class AnswerQuestionListener implements View.OnClickListener {
-
-        private int position;
-
-        public AnswerQuestionListener(int position) {
-            this.position = position;
-        }
+    class DidKnowListener implements View.OnClickListener {
 
         @Override
         public void onClick(View view) {
+            //The RecyclerView can only find the position of a view one level below itself
+            // so we have to navigate the view hierarchy upwards from the clicked view.
+            View v = view;
+            View parent = (View) v.getParent();
+            while (!(parent instanceof RecyclerView)){
+                v=parent;
+                parent = (View) parent.getParent();
+            }
+            int position = mRecyclerView.getChildAdapterPosition(v);
             Flashcard card = cards.get(position);
             //Increase the answer counter accordingly
             if (view.getId() == R.id.knowTextView) {
@@ -178,8 +185,6 @@ public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             }
             //Update the card in the db
             new UpdateCounter().execute(card);
-            //Turn the card around
-            card.setCurrentType(Flashcard.ANSWER_TYPE);
             notifyDataSetChanged();
         }
 
@@ -188,16 +193,17 @@ public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     //Turn the card back around to view the question
     class TurnAroundListener implements View.OnClickListener {
 
-        private int position;
-
-        public TurnAroundListener(int position) {
-            this.position = position;
-        }
-
         @Override
         public void onClick(View view) {
+            View v = view;
+            View parent = (View) v.getParent();
+            while (!(parent instanceof RecyclerView)){
+                v=parent;
+                parent = (View) parent.getParent();
+            }
+            int position = mRecyclerView.getChildAdapterPosition(v);
             //Just change the type of the card item
-            cards.get(position).setCurrentType(Flashcard.QUESTION_TYPE);
+            cards.get(position).setCurrentType(Flashcard.ANSWER_TYPE);
             notifyDataSetChanged();
         }
 
@@ -229,15 +235,9 @@ public class CardsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     //Long click listener to delete questions
     class DeleteListener implements View.OnLongClickListener {
 
-        private int position;
-
-        public DeleteListener(int position) {
-            this.position = position;
-        }
-
         @Override
         public boolean onLongClick(View view) {
-
+            final int position = mRecyclerView.getChildAdapterPosition(view);
             AlertDialog.Builder builder = new AlertDialog.Builder(context);
             builder.setTitle(context.getResources().getString(R.string.delete_card_title));
             builder.setMessage(context.getResources().getString(R.string.delete_card));

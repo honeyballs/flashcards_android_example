@@ -66,7 +66,6 @@ public class MainActivity extends AppCompatActivity implements Communicator{
             deleteNotificationChannel();
             stopAlarmIfExists();
         }
-
     }
 
     @Override

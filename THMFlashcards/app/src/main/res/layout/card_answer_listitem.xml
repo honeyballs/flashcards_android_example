@@ -81,16 +81,33 @@
                     android:layout_height="0dp"
                     android:layout_weight="1"/>
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="end"
-                    android:id="@+id/turnTextView"
-                    android:textColor="@color/colorSecondary"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:text="@string/turn"
-                    />
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/knowTextView"
+                        android:textColor="@color/colorSecondary"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:text="@string/know"
+                        android:layout_marginRight="20dp"
+                        android:layout_marginEnd="20dp"
+                        />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/dontKnowTextView"
+                        android:textColor="@color/colorSecondary"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:text="@string/dont_know"
+                        />
+
 
             </LinearLayout>
 

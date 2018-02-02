@@ -56,7 +56,7 @@ public class CardsDetailFragment extends Fragment {
         //Improves performance if size of the view doesn't change
         list.hasFixedSize();
         //The layout manager handles placing of items and determines reuse
-        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getActivity());
+        LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity());
         list.setLayoutManager(layoutManager);
         //Set the adapter
         adapter = new CardsAdapter(cards, getActivity());

@@ -12,6 +12,7 @@
         <item name="android:textAppearanceLargePopupMenu">@style/myPopupMenuTextAppearanceLarge</item>
     </style>
 
+
     <style name="ToolbarCustomTheme" parent="AppTheme">
         <item name="android:textColorPrimary">@color/textColorSecondary</item>
         <!-- This sets the color of the Back Arrow -->
